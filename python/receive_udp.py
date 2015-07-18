@@ -17,7 +17,7 @@ localIP = socket.gethostbyname(socket.gethostname())
 # Prompt for IP. Default local IP if null input
 #
 while True:
-    print ("Enter the IP of the receiving machine you will be "
+    print ("Enter the IP of the receiving machine (this machine) you will be "
         "communicating with. (Default Local IP: '{}')" 
         .format(str(localIP)), end="")
     UDP_IP = input(" >> ") or localIP
