@@ -35,7 +35,7 @@ while True:
 while True: 
     try:
         UDP_PORT = int(input("Enter the PORT you will be communicating over. "
-        "(Default: 65104) >> ") or '65104')
+            "(Default: 65104) >> ") or '65104')
     except ValueError:
         # Not Legal
         print("You need to type in a valid PORT number!")
