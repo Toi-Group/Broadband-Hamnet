@@ -1,9 +1,7 @@
 # !python3
 #
-
 # Source: https://wiki.python.org/moin/UdpCommunication
 #
-
 # This code sends a message to another script running at the UDP_IP destination
 # the script receive_udp.py
 #
@@ -13,13 +11,24 @@ import socket
 # Setup connection to other Pi
 # Prompt for IP. Default localhost if null input
 #
-UDP_IP = input("Enter the IP of the client machine you will be communicating with. (Default: '127.0.0.1')>> ") or '127.0.0.1'
-
+while True:
+    UDP_IP = input("Enter the IP of the client machine you will be "
+        "communicating with. (Default: '127.0.0.1')>> ") or '127.0.0.1'
+    try:
+        socket.inet_aton(UDP_IP)
+        # Legal
+        break
+    except socket.error:
+        # Not Legal
+        print("You need to enter a valid IPv4 address!\n")
+        continue
+        
 # Prompt for PORT. Default 65104 if null input
 #
 while True: 
     try:
-        UDP_PORT = int(input("Enter the PORT you will be communicating over. (Default. 65104)>> ") or '65104')
+        UDP_PORT = int(input("Enter the PORT you will be communicating over. "
+            "(Default. 65104)>> ") or '65104')
     except ValueError:
         print("You need to type in a valid PORT number!")
         continue
@@ -31,7 +40,9 @@ while True:
             continue
 # Bind the socket
 #
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Send over internet using UDP
+# Send over internet using UDP
+#
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) 
 
 
 # Run the program forever
@@ -42,7 +53,8 @@ while True:
     
     # Let the user know what IP and Port we are using to communicate with
     #
-    print ('Sending message to UDP target: {}:{}' .format(str(UDP_IP), UDP_PORT))
+    print ('Sending message to UDP target: {}:{}' .format(str(UDP_IP), 
+        UDP_PORT))
     
     # Send the message using the socket opened
     #
