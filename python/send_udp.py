@@ -8,12 +8,18 @@
 
 import socket
 
+# Get local IP
+#
+localIP = socket.gethostbyname(socket.gethostname())
+
 # Setup connection to other Pi
-# Prompt for IP. Default localhost if null input
+# Prompt for IP. Default localIP if null input
 #
 while True:
-    UDP_IP = input("Enter the IP of the client machine you will be "
-        "communicating with. (Default: '127.0.0.1')>> ") or '127.0.0.1'
+    print ("Enter the IP of the client machine you will be "
+        "communicating with. (Default Local IP: '{}')" 
+        .format(str(localIP)), end="")
+    UDP_IP = input(" >> ") or localIP
     try:
         socket.inet_aton(UDP_IP)
         # Legal
@@ -28,7 +34,7 @@ while True:
 while True: 
     try:
         UDP_PORT = int(input("Enter the PORT you will be communicating over. "
-            "(Default. 65104)>> ") or '65104')
+            "(Default. 65104) >> ") or '65104')
     except ValueError:
         print("You need to type in a valid PORT number!")
         continue
