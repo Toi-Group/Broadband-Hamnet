@@ -1,7 +1,12 @@
+#source
+#http://www.tkdocs.com/tutorial/firstexample.html#design
+
+
+#headers
 from tkinter import *
 from tkinter import ttk
 
-
+#function definitions
 def calculate(*args):
     try:
         value = float(feet.get())
@@ -14,7 +19,7 @@ def quit():
 
     mainframe.quit()
 
-
+#begin formatting GUI
 root = Tk()
 root.title("Feet to Meters")
 
@@ -41,4 +46,5 @@ for child in mainframe.winfo_children(): child.grid_configure(padx=5, pady=5)
 feet_entry.focus()
 root.bind('<Return>', calculate)
 
+#run it
 root.mainloop()
