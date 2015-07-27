@@ -2,6 +2,8 @@
 from tkinter import *
 from tkinter import ttk
 import socket
+import sys
+
 
 #function definitions
 
@@ -14,10 +16,7 @@ def quit():
 ##----------------------##
 
 def send(*args):
-    #send_udp code                                                                
-    # Source: https://wiki.python.org/moin/UdpCommunication                         # This code sends a message to another script running at the UDP_IP destination
-    # the script receive_udp.py                                                     # Get local IP                                                                  #localIP = socket.gethostbyname(socket.gethostname())
-    # Setup connection to other Pi                                                  # Prompt for IP. Default localIP if null input 
+
     while True:
 #        print ("Enter the IP of the client machine you will be "
 #            "communicating with. (Default Local IP: '{}')"
@@ -29,27 +28,25 @@ def send(*args):
             # Legal
             break
         except socket.error:
-            # Not Legal                                                             
+            # Not Legal
             print("You need to enter a valid IPv4 address!\n")
-            continue
+            sys.exit(0)
 
 # Prompt for PORT. Default 65104 if null input                                  
 #                                                                               
     while True:
         try:
-            #UDP_PORT = int(input("Enter the PORT you will be communicating over. "
             UDP_PORT = int(PORT.get())
-
         #        "(Default. 65104) >> ") or '65104')
         except ValueError:
             print("You need to type in a valid PORT number!")
-            continue
+            sys.exit(0)
         else:
             if UDP_PORT in range(65535):
                 break
             else:
                 print("Port must be in range 0-65535!")
-                continue
+                sys.exit(0)
 # Bind the socket                                                               
 #                                                                               
 # Send over internet using UDP                                                  
@@ -76,6 +73,7 @@ def send(*args):
     # Confirm with the user the message sent succesfully                        
     #                                                                           
         print ("Successfully sent message: {}" .format(str(INFO)))
+        sys.exit(0)
 
 ## -------------------------------- ##
 ## -------------------------------- ##
