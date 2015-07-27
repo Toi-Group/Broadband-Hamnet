@@ -1,6 +1,7 @@
-#header files
+##header files
 
 import tkinter as tk #tkinter is a GUI support package
+from tkinter import ttk
 #as tk renames tkinter as tk for ease
 
 class Application(tk.Frame): #application class must inherit from Tkinter's frame class
@@ -16,6 +17,8 @@ class Application(tk.Frame): #application class must inherit from Tkinter's fram
               command= self.quit) #creates the quit button
        
         self.quitButton.grid() #puts the button on the app
+
+
 
 app = Application() #the main program starts here
 app.master.title('Quit Button Application') #creates the title of the window

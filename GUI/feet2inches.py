@@ -32,7 +32,7 @@ feet = StringVar()
 meters = StringVar()
 
 feet_entry = ttk.Entry(mainframe, width=7, textvariable=feet)
-feet_entry.grid(column=2, row=1, sticky=(W,E))
+feet_entry.grid(column=2, row=1, sticky=(E))
 
 ttk.Label(mainframe, textvariable=meters).grid(column=2,row=2, sticky=(W,E))
 ttk.Button(mainframe, text = "Calculate", command = calculate).grid(column=3, row=3, sticky=W)
