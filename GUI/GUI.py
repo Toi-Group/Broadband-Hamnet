@@ -30,7 +30,7 @@ def send(*args):
         except socket.error:
             # Not Legal
             print("You need to enter a valid IPv4 address!\n")
-            sys.exit(0)
+            return None
 
 # Prompt for PORT. Default 65104 if null input                                  
 #                                                                               
@@ -46,7 +46,8 @@ def send(*args):
                 break
             else:
                 print("Port must be in range 0-65535!")
-                sys.exit(0)
+                return None
+
 # Bind the socket                                                               
 #                                                                               
 # Send over internet using UDP                                                  
@@ -73,14 +74,15 @@ def send(*args):
     # Confirm with the user the message sent succesfully                        
     #                                                                           
         print ("Successfully sent message: {}" .format(str(INFO)))
-        sys.exit(0)
+        return None
 
 ## -------------------------------- ##
 ## -------------------------------- ##
 ## -------------------------------- ##
 ## -----------END SEND()----------- ##
 ## -------------------------------- ##                                         
-## -------------------------------- ##                                          ## -------------------------------- ## 
+## -------------------------------- ##
+## -------------------------------- ## 
 
 #Begin formatting the GUI
 root = Tk()
