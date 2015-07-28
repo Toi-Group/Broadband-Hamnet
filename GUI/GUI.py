@@ -3,7 +3,8 @@ from tkinter import *
 from tkinter import ttk
 import socket
 import sys
-
+import time
+import tkinter.scrolledtext
 
 #function definitions
 
@@ -16,12 +17,9 @@ def quit():
 ##----------------------##
 
 def send(*args):
-
+    MESSAGE_success.set('')
+    err_IP.set('')
     while True:
-#        print ("Enter the IP of the client machine you will be "
-#            "communicating with. (Default Local IP: '{}')"
-#            .format(str(localIP)), end="")
-        ##UDP_IP = input(" >> ") or localIP
         UDP_IP = IP.get()
         try:
             socket.inet_aton(UDP_IP)
@@ -29,24 +27,29 @@ def send(*args):
             break
         except socket.error:
             # Not Legal
-            print("You need to enter a valid IPv4 address!\n")
+            #print("You need to enter a valid IPv4 address!\n")
+            err_IP.set("You need to enter a valid IPv4 address!")
             return None
 
 # Prompt for PORT. Default 65104 if null input                                  
 #                                                                               
     while True:
         try:
+            err_PORT.set('')
             UDP_PORT = int(PORT.get())
         #        "(Default. 65104) >> ") or '65104')
         except ValueError:
-            print("You need to type in a valid PORT number!")
-            sys.exit(0)
+            #print("You need to type in a valid PORT number!")
+            err_PORT.set("You need to enter a valid PORT number!")
+            return None
         else:
             if UDP_PORT in range(65535):
                 break
             else:
-                print("Port must be in range 0-65535!")
+                err_PORT.set("Port must be in range 0-65535!")
                 return None
+
+        
 
 # Bind the socket                                                               
 #                                                                               
@@ -64,16 +67,16 @@ def send(*args):
 
     # Let the user know what IP and Port we are using to communicate with       
     #                                                                           
-        print ('Sending message to UDP target: {}:{}' .format(str(UDP_IP),
-            UDP_PORT))
-
+#        MESSAGE_send.set('Sending message to UDP target: {}:{}' .format(str(UDP_IP),
+#            UDP_PORT))
+        
     # Send the message using the socket opened                                  
     #                                                                           
         sock.sendto(bytes(INFO, 'UTF-8'), (UDP_IP, UDP_PORT))
 
-    # Confirm with the user the message sent succesfully                        
+    # Confirm with the user  the message sent succesfully                        
     #                                                                           
-        print ("Successfully sent message: {}" .format(str(INFO)))
+        MESSAGE_success.set("Seccessfully sent message: {}" .format(str(INFO)))
         return None
 
 ## -------------------------------- ##
@@ -86,7 +89,7 @@ def send(*args):
 
 #Begin formatting the GUI
 root = Tk()
-root.title("Preparation for Communication")
+root.title("TOI Communication: Send")
 
 mainframe = ttk.Frame(root, padding="120 120 120 120")
 mainframe.grid(column=0, row =0, sticky=(N,W,E,S))
@@ -95,24 +98,31 @@ mainframe.columnconfigure(0, weight = 1)
 
 #define variables
 IP = StringVar()
+err_IP = StringVar()
 MESSAGE = StringVar()
+MESSAGE_success = StringVar()
+#MESSAGE_send = StringVar()
 PORT = StringVar()
+err_PORT = StringVar()
 
 #Get necessary variables and place text boxes on the grid
 IP_entry = ttk.Entry(mainframe, width = 18, textvariable = IP)
-IP_entry.grid(column = 3, row = 1)
+IP_entry.grid(column = 2, row = 1)
 
 PORT_entry = ttk.Entry(mainframe, width = 7, textvariable = PORT)
-PORT_entry.grid(column = 3, row = 2)
+PORT_entry.grid(column = 2, row = 2)
 
 MESSAGE_entry = ttk.Entry(mainframe, width = 25, textvariable = MESSAGE)
-MESSAGE_entry.grid(column = 3, row = 3)
+MESSAGE_entry.grid(column = 2, row = 3)
 
 ttk.Label(mainframe, text = "Enter IP Address").grid(column = 1, row = 1)
 ttk.Label(mainframe, text = "Enter the PORT for Communication").grid(column = 1, row = 2)
 ttk.Label(mainframe, text = "Enter the Message").grid(column = 1, row = 3)
 ttk.Button(mainframe, text = "Send", command = send).grid(column = 4, row = 4)
 ttk.Button(mainframe, text = "Quit", command = quit).grid(column = 1, row = 4)
+ttk.Label(mainframe, textvariable=err_IP, foreground='red').grid(column=3, row=1)
+ttk.Label(mainframe, textvariable=err_PORT, foreground='red').grid(column=3, row = 2)
+ttk.Label(mainframe, textvariable=MESSAGE_success, wraplength = 400).grid(column = 2, row = 4)
 
 for child in mainframe.winfo_children(): child.grid_configure(padx=5, pady=5)
 
@@ -122,4 +132,6 @@ MESSAGE_entry.focus()
 root.bind('<Return>', send)
 
 #run it
+MESSAGE_success.set('')
+
 root.mainloop()
