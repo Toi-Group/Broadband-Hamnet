@@ -4,7 +4,7 @@ from tkinter import ttk
 import socket
 import sys
 import time
-import tkinter.scrolledtext
+import tkinter.scrolledtext as ScrolledText
 
 #function definitions
 
@@ -63,7 +63,7 @@ def send(*args):
     # Prompt the user for a keystroke or message to send                        
     #                                                                           
         #MESSAGE = input("What would you like to send (keyboard input)>> ")
-        INFO = MESSAGE.get()
+        INFO = MESSAGE_entry.get("1.0", "end")
 
     # Let the user know what IP and Port we are using to communicate with       
     #                                                                           
@@ -76,7 +76,9 @@ def send(*args):
 
     # Confirm with the user  the message sent succesfully                        
     #                                                                           
-        MESSAGE_success.set("Seccessfully sent message: {}" .format(str(INFO)))
+    # ##----OLD CONFIRMATION MESSAGE----##
+    #    MESSAGE_success.set("Seccessfully sent message: {}" .format(str(INFO)))
+        MESSAGE_success.set("Message Sent Successfully")
         return None
 
 ## -------------------------------- ##
@@ -112,8 +114,16 @@ IP_entry.grid(column = 2, row = 1)
 PORT_entry = ttk.Entry(mainframe, width = 7, textvariable = PORT)
 PORT_entry.grid(column = 2, row = 2)
 
-MESSAGE_entry = ttk.Entry(mainframe, width = 25, textvariable = MESSAGE)
+##----THIS WAS ORIGINAL MESSAGE ENTRY WIDGET----##
+#MESSAGE_entry = ttk.Entry(mainframe, width = 25, textvariable = MESSAGE)
+#MESSAGE_entry.grid(column = 2, row = 3)
+
+
+#this is the scroll box
+MESSAGE_entry = ScrolledText.ScrolledText(mainframe, height = 0, width = 30,
+    borderwidth=0, padx = 0)
 MESSAGE_entry.grid(column = 2, row = 3)
+
 
 ttk.Label(mainframe, text = "Enter IP Address").grid(column = 1, row = 1)
 ttk.Label(mainframe, text = "Enter the PORT for Communication").grid(column = 1, row = 2)
