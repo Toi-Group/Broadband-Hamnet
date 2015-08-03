@@ -123,7 +123,7 @@ PORT_entry.grid(column = 2, row = 2)
 MESSAGE_entry = ScrolledText.ScrolledText(mainframe, height = 0, width = 30,
     borderwidth=0, padx = 0)
 MESSAGE_entry.grid(column = 2, row = 3)
-
+MESSAGE_entry.configure(highlightbackground="grey", highlightcolor="grey", borderwidth = 0)
 
 ttk.Label(mainframe, text = "Enter IP Address").grid(column = 1, row = 1)
 ttk.Label(mainframe, text = "Enter the PORT for Communication").grid(column = 1, row = 2)
