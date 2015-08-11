@@ -4,7 +4,7 @@
 ##---              them according to the desired packet size
 ##--- Author: Robert Irwin
 
-import sys, math, os
+import sys, math, os, time
 
 #file = open("sample_parse.txt", "r")
 #message = str(file.read())
@@ -71,5 +71,9 @@ message = ("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque ege
 	"Donec mattis erat vestibulum pharetra auctor. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nam viverra dolor turpis, vel auctor ligula finibus a. Nulla imperdiet nisi odio, ut vulputate ligula egestas et. Nulla congue lectus nec nulla malesuada tincidunt. Etiam scelerisque gravida egestas. In porta turpis magna, sed varius enim convallis a. Maecenas ut nisl a mi lacinia blandit. Vestibulum eu risus sit amet eros hendrerit efficitur in sit amet nisl. Nam venenatis, turpis sed gravida vehicula, sem tellus cursus nunc, vel sodales felis mauris vitae velit. Fusce ornare, nisl vel congue ullamcorper, ante ipsum vulputate enim, id vestibulum nisl odio quis libero. Suspendisse diam ligula, pulvinar sit amet augue eget, mollis laoreet neque. Suspendisse magna purus, tincidunt at nisi id, hendrerit congue leo. "
 	"Nulla egestas, eros sed pellentesque dictum, mi erat suscipit sapien, vitae facilisis diam velit et velit. Ut mollis sed nulla ut viverra. Donec ultrices sem eu leo ornare pharetra quis at eros. Vestibulum finibus justo eget urna aliquet lobortis. Suspendisse efficitur massa id pellentesque rhoncus. Pellentesque lacus ex, vestibulum quis velit ac, rhoncus semper odio. Etiam quis tincidunt risus, non aliquet magna. Maecenas hendrerit, felis non sollicitudin tincidunt, nibh nisi ullamcorper justo, malesuada sollicitudin urna nunc sit amet risus. Donec ac fringilla nibh. Donec vehicula id erat eu suscipit. In et turpis convallis, accumsan dolor vitae, placerat nisl. "
 	"Etiam scelerisque odio eget nunc iaculis euismod. Quisque sed nisl placerat, pulvinar quam nec, consectetur dui. Phasellus eu ligula non ipsum mollis dapibus semper non purus. Duis non eros at lectus ultricies packet_messageor. Etiam sit amet nibh lacus. Sed bibendum tortor vitae tortor sollicitudin vestibulum. Cras tristique, risus eu packet_messageor mattis, felis ligula varius mi, eu mattis augue mi sit amet est. Fusce quis ipsum condimentum leo porttitor dictum non et turpis. Nunc packet_messageor at turpis sed consectetur. Pellentesque faucibus dui id ante congue, vel aliquet justo maximus. Nulla at pretium est.")
+start = time.perf_counter()
 messtosend = parse_order(message, 500)
+end = time.perf_counter()
+elapsed = end-start
 print(messtosend)
+print('elapsed time = ', elapsed)
