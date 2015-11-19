@@ -35,6 +35,7 @@ def receive():
         try:
             err_PORT.set('')
             UDP_PORT = int(PORT.get())
+            break
         except ValueError:
             # Not Legal  
             err_PORT.set("You need to type in a valid PORT number!")

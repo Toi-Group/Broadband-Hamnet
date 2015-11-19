@@ -20,14 +20,13 @@ def send(*args):
     MESSAGE_success.set('')
     err_IP.set('')
     while True:
-        UDP_IP = IP.get()
+        UDP_IP = IP.get() #This gets the IP address from the GUI 
         try:
-            socket.inet_aton(UDP_IP)
+            socket.inet_aton(UDP_IP)  #converts a dot format IPv4 address to a 32-bit packed binary format
             # Legal
             break
-        except socket.error:
+        except socket.error: #if an invalid IPv4 address is entered, socket.error will be one due to socket.inet_aton
             # Not Legal
-            #print("You need to enter a valid IPv4 address!\n")
             err_IP.set("You need to enter a valid IPv4 address!")
             return None
 
@@ -36,7 +35,7 @@ def send(*args):
     while True:
         try:
             err_PORT.set('')
-            UDP_PORT = int(PORT.get())
+            UDP_PORT = int(PORT.get())  #grabs the PORT number from the GUI.  Maybe enter a static PORT for user's ease???
         #        "(Default. 65104) >> ") or '65104')
         except ValueError:
             #print("You need to type in a valid PORT number!")
@@ -62,14 +61,8 @@ def send(*args):
     while True:
     # Prompt the user for a keystroke or message to send                        
     #                                                                           
-        #MESSAGE = input("What would you like to send (keyboard input)>> ")
         INFO = MESSAGE_entry.get("1.0", "end")
 
-    # Let the user know what IP and Port we are using to communicate with       
-    #                                                                           
-#        MESSAGE_send.set('Sending message to UDP target: {}:{}' .format(str(UDP_IP),
-#            UDP_PORT))
-        
     # Send the message using the socket opened                                  
     #                                                                           
         sock.sendto(bytes(INFO, 'UTF-8'), (UDP_IP, UDP_PORT))
