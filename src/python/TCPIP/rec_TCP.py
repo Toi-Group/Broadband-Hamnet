@@ -7,12 +7,12 @@ import sys
 
 
 def receiveTCP():
-    TCP_IP = raw_input('Enter IPv4 of this Machine: ')
-
+    #TCP_IP = raw_input('Enter IPv4 of this Machine: ')
+    TCP_IP = "10.93.121.52"
     #port this machine listens on
     #this needs to be the send port of other machine
     #
-    TCP_PORT = 5005
+    TCP_PORT = 8888
     BUFFER_SIZE = 1024
     
     #create a tuple with port and ip
@@ -32,10 +32,11 @@ def receiveTCP():
    
 
 def sendTCP():
-    TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
+    #TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
+    TCP_IP = "10.119.197.29"
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
-    TCP_PORT = 8888
+    TCP_PORT = 5005
     BUFFER_SIZE = 1024
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
