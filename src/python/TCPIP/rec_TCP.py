@@ -57,7 +57,7 @@ def sendTCP():
     #if we get the exit message, close the connection
     s.close()
 
-def main():
+def main(*args):
     #start a thread to receive
     #
     try:
