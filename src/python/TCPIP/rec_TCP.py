@@ -54,7 +54,7 @@ def sendTCP():
         #listen for confirmation
         response = s.recv(BUFFER_SIZE)
         if response != None:
-            print "%s received message: %s", % (TCP_IP, response)
+            print "%s received message: %s" % (TCP_IP, response)
         
     #if we get the exit message, close the connection
     s.close()
@@ -74,3 +74,7 @@ def main():
         thread.start_new_thread(receiveTCP)
     except:
         print "Error: Unable to start thread"
+
+if __name__ == '__main__':
+    main(sys.argv[0:])
+
