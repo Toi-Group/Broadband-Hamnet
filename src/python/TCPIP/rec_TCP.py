@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import socket
-import thread
+from threading import Thread
 import sys
 
 
@@ -20,7 +20,7 @@ def receiveTCP():
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((DEST))
-   #s.listen(1)
+    s.listen(1)
    
     conn, addr = s.accept()
     print 'Connection address:', addr
@@ -57,22 +57,15 @@ def sendTCP():
     #if we get the exit message, close the connection
     s.close()
 
-def main(*args):
+def main():
     #start a thread to receive
     #
-    try:
-        thread.start_new_thread(receiveTCP)
-    except:
-        print "Error: Unable to start thread"
+    R = Thread(target=receiveTCP)
+    S = Thread(target=sendTCP)
 
-    
-    #once we are connected, open another thread to send
-    #
-    try:
-        thread.start_new_thread(receiveTCP)
-    except:
-        print "Error: Unable to start thread"
+    R.start()
+    S.start()
 
 if __name__ == '__main__':
-    main(sys.argv[0:])
+    main()
 
