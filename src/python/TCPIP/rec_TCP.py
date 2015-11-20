@@ -19,8 +19,6 @@ def receiveTCP():
     DEST = (TCP_IP, TCP_PORT)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((TCP_IP, TCP_PORT))
-
     s.bind((DEST))
    #s.listen(1)
    
