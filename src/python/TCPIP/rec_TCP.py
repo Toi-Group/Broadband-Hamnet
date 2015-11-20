@@ -1,4 +1,4 @@
- #!/usr/bin/env python
+#!/usr/bin/env python
 
 import socket
 
@@ -8,14 +8,17 @@ BUFFER_SIZE = 1024
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
+s.bind((TCP_IP,TCP_PORT))
+s.listen(1)
+
+conn, addr = s.accept()
+
+print "Connection Address: ", addr
 
 while True:
-
-    MESSAGE = raw_input("Enter Message: ")
-    s.send(MESSAGE)
-    
-    if MESSAGE = 'EXIT': break
-    data = s.recv(BUFFER_SIZE)
+    data = conn.recv(BUFFER_SIZE)
+    if not data: break
     print "received data: ", data
+    conn.send(data) #echo
 
-s.close()
+conn.close()
