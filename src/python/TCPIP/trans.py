@@ -43,26 +43,29 @@ def receiveTCP(q_send,q_rec):
             q_send.put(0)
 
         #check what is on the send queue.  If it is 1, break from the 
-        #while loop which terminates the thread
+        #while loop which terminates the thread. We also have to close the socket
         check = q_send.get()
         if check:
+            conn.close()
             break
 
         data = conn.recv(BUFFER_SIZE)
-
+        print "received data:", data
         #if we received EXIT from the other machine, signal the 
         #sending thread to terminate and break from the while loop
         #which closes the program
         #
         if data == 'EXIT':
+            conn.close()
+            s.close()
             q_rec.put(1)
             break
         else:
             q_rec.put(0)
 
-        print "received data:", data
+
 #        conn.send(data)  # echo
-   
+    print "closing send thread"
 
 def sendTCP(q_send,q_rec):
 
@@ -88,6 +91,7 @@ def sendTCP(q_send,q_rec):
         #check the receive thread's status
         check = q_rec.get()
         if check:
+            s.close()
             q_send.put(1)
             break
 
@@ -97,11 +101,12 @@ def sendTCP(q_send,q_rec):
         #
         s.send(MESSAGE)
 
-        #if we get the exit message, signal the receive thread and
+        #if we get the exit message, close the socket, signal the receive thread and
         #then let the thread terminate
         #
         if MESSAGE == "EXIT":
             q_send.put(1)
+            s.close()
             break
 
         #if we dont get the exit message, signal the receive thread
@@ -127,9 +132,8 @@ def main():
 
     #start a thread to receive, and a thread to send
     #
-    R = Thread(target=receiveTCP, args=(q_send,q_rec))
-    S = Thread(target=sendTCP, args=(q_send,q_rec))
-
+    R = Thread(target=receiveTCP, args=(q_send,q_rec,))
+    S = Thread(target=sendTCP, args=(q_send,q_rec,))
 
     #start the threads
     #
