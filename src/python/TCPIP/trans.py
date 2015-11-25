@@ -6,6 +6,10 @@ import sys
 import Queue
 
 
+def getMessage():
+    MESSAGE = raw_input("Enter Message")
+    return MESSAGE
+
 def receiveTCP(q_send,q_rec):
 
     #initializ the receive queue
@@ -111,8 +115,8 @@ def sendTCP(q_send,q_rec):
 
         #if we dont get the exit message, signal the receive thread
         #to continue running
-        else:
-            q_send.put(0)
+#        else:
+#            q_send.put(0)
             
         #listen for confirmation
         #response = s.recv(BUFFER_SIZE)
@@ -134,12 +138,12 @@ def main():
     #
     R = Thread(target=receiveTCP, args=(q_send,q_rec,))
     S = Thread(target=sendTCP, args=(q_send,q_rec,))
-
+    S.daemon = True
     #start the threads
     #
     R.start()
     S.start()
-    
+
 if __name__ == '__main__':
     main()
 
