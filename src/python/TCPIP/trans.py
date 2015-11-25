@@ -3,10 +3,14 @@
 import socket
 from threading import Thread
 import sys
+import Queue
 
 
+def receiveTCP(q_send,q_rec):
 
-def receiveTCP():
+    #initializ the receive queue
+    q_rec.put(0)
+
     TCP_IP = raw_input('Enter IPv4 of this Machine: ')
 
     #port this machine listens on
@@ -18,22 +22,53 @@ def receiveTCP():
     #create a tuple with port and ip
     DEST = (TCP_IP, TCP_PORT)
 
+
+    #begin process of accepting incoming connection on designated port
+    #
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((DEST))
     s.listen(1)
-   
     conn, addr = s.accept()
+   
+    #prints who we are connected to
+    #
     print 'Connection address:', addr
+
+    #wait for messages
     while 1:
+
+        #first we check if the send queue is empty
+        if q_send.empty():
+            #if the send q is empty, put a 0 on it.
+            q_send.put(0)
+
+        #check what is on the send queue.  If it is 1, break from the 
+        #while loop which terminates the thread
+        check = q_send.get()
+        if check:
+            break
+
         data = conn.recv(BUFFER_SIZE)
+
+        #if we received EXIT from the other machine, signal the 
+        #sending thread to terminate and break from the while loop
+        #which closes the program
+        #
         if data == 'EXIT':
-            sys.exit()
+            q_rec.put(1)
+            break
+        else:
+            q_rec.put(0)
 
         print "received data:", data
-        conn.send(data)  # echo
+#        conn.send(data)  # echo
    
 
-def sendTCP():
+def sendTCP(q_send,q_rec):
+
+    #initialize the send queue
+    q_send.put(0)
+
     TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
@@ -45,30 +80,62 @@ def sendTCP():
 
     while 1:
 
+        #Ensure the rec queue is not empty
+        if q_rec.empty():
+            #if it is empty, put a 0 on the queue
+            q_rec.put(0)
+
+        #check the receive thread's status
+        check = q_rec.get()
+        if check:
+            q_send.put(1)
+            break
+
         MESSAGE = raw_input("Enter Message: ")
 
         #send the message
+        #
         s.send(MESSAGE)
+
+        #if we get the exit message, signal the receive thread and
+        #then let the thread terminate
+        #
         if MESSAGE == "EXIT":
-            sys.exit()
-        
+            q_send.put(1)
+            break
+
+        #if we dont get the exit message, signal the receive thread
+        #to continue running
+        else:
+            q_send.put(0)
+            
         #listen for confirmation
-        response = s.recv(BUFFER_SIZE)
-        if response != None:
-            print "%s received message: %s" % (TCP_IP, response)
+        #response = s.recv(BUFFER_SIZE)
+        #if response != None:
+        #    print "%s received message: %s" % (TCP_IP, response)
         
-    #if we get the exit message, close the connection
+
 
 
 def main():
-    #start a thread to receive
-    #
-    R = Thread(target=receiveTCP)
-    S = Thread(target=sendTCP)
 
+    #instantiate a queue object.  We will use this to share data across 
+    #threads
+    #
+    q_send = Queue.Queue()
+    q_rec = Queue.Queue()
+
+    #start a thread to receive, and a thread to send
+    #
+    R = Thread(target=receiveTCP, args=(q_send,q_rec))
+    S = Thread(target=sendTCP, args=(q_send,q_rec))
+
+
+    #start the threads
+    #
     R.start()
     S.start()
-
+    
 if __name__ == '__main__':
     main()
 
