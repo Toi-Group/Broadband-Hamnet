@@ -3,14 +3,21 @@
 import Queue
 import socket
 
+#sendTCP
+#write what function
+#does here, explain
+#inputs and outputs
+#
 def sendTCP(q_send,q_rec):
 
     #initialize the send queue
+    #
     q_send.put(0)
 
     TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
+    #
     TCP_PORT = 5005
     BUFFER_SIZE = 1024
 
@@ -20,11 +27,14 @@ def sendTCP(q_send,q_rec):
     while 1:
 
         #Ensure the rec queue is not empty
+        #
         if q_rec.empty():
             #if it is empty, put a 0 on the queue
+            #
             q_rec.put(0)
 
         #check the receive thread's status
+        #
         check = q_rec.get()
         if check:
             s.close()
@@ -47,8 +57,8 @@ def sendTCP(q_send,q_rec):
 
         #if we dont get the exit message, signal the receive thread
         #to continue running
-#        else:
-#            q_send.put(0)
+        #else:
+        #     q_send.put(0)
 
         #listen for confirmation
         #response = s.recv(BUFFER_SIZE)

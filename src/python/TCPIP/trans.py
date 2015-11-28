@@ -8,6 +8,9 @@ import getMessage
 import receiveTCP
 import sendTCP
 
+#main
+#intilizes threads and queues
+#
 def main():
 
     #instantiate a queue object.  We will use this to share data across 
@@ -21,6 +24,7 @@ def main():
     R = Thread(target=receiveTCP, args=(q_send,q_rec,))
     S = Thread(target=sendTCP, args=(q_send,q_rec,))
     S.daemon = True
+    
     #start the threads
     #
     R.start()
