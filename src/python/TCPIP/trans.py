@@ -5,7 +5,7 @@ from threading import Thread
 import sys
 import Queue
 from getMessage import getMessage
-from receive TCP import receiveTCP
+from receiveTCP import receiveTCP
 from sendTCP import sendTCP
 
 #main
