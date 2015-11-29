@@ -2,6 +2,7 @@
 
 import socket
 import Queue
+from localIP import localIP
 
 #receiveTCP
 #write what function
@@ -16,8 +17,10 @@ def receiveTCP(q_send,q_rec):
 
     #find the local IPv4
     #
-    TCP_IP = raw_input('Enter IPv4 of this Machine: ')
-
+    #TCP_IP = raw_input('Enter IPv4 of this Machine: ')
+    #
+    TCP_IP = localIP()
+    
     #port this machine listens on
     #this needs to be the send port of other machine
     #

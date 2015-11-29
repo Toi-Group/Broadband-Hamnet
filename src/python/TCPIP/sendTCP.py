@@ -2,6 +2,7 @@
 
 import Queue
 import socket
+from localIP import localIP
 
 #sendTCP
 #write what function
@@ -14,7 +15,12 @@ def sendTCP(q_send,q_rec):
     #
     q_send.put(0)
 
-    TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
+    #get local IPv4
+    #
+    #TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
+    #
+    TCP_IP = localIP()
+    
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
     #
