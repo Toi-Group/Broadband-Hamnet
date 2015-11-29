@@ -4,9 +4,9 @@ import socket
 from threading import Thread
 import sys
 import Queue
-import getMessage
-import receiveTCP
-import sendTCP
+from getMessage import getMessage
+from receive TCP import receiveTCP
+from sendTCP import sendTCP
 
 #main
 #intilizes threads and queues
