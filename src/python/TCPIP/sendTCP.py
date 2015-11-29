@@ -15,11 +15,9 @@ def sendTCP(q_send,q_rec):
     #
     q_send.put(0)
 
-    #get local IPv4
+    #get IPv4 of recipient
     #
-    #TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
-    #
-    TCP_IP = localIP()
+    TCP_IP = raw_input('Enter IPv4 address of Recipient: ')
     
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
