@@ -1,6 +1,10 @@
-# Broadband-Hamnet
-Senior Project Temple EE 2016.
+# Broadband-Hamnet Chat Software
+v0.2
 
-Website: https://sites.google.com/a/temple.edu/broadband-mcomm/
+Compatiable with [Anaconda Python 3.5][]
 
-More to come soon...
+This is a Temple EE Senior Project 2016.
+Offical Project Website: https://sites.google.com/a/temple.edu/broadband-mcomm/
+
+
+[Anaconda Python 3.5]: https://www.continuum.io/downloads
