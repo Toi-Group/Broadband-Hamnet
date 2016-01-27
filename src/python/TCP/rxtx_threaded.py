@@ -4,7 +4,6 @@ import socket
 from threading import Thread
 import sys
 import queue
-from modules.getMessage import getMessage
 from modules.receiveTCP import receiveTCP
 from modules.sendTCP import sendTCP
 
