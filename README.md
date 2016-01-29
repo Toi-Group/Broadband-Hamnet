@@ -1,5 +1,5 @@
 # Broadband-Hamnet Chat Software
-v0.2
+v0.3
 
 Compatiable with [Anaconda Python 3.5][]
 
