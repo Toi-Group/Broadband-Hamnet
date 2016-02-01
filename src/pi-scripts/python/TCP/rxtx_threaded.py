@@ -19,41 +19,43 @@ def main():
     q_send = queue.Queue()
     q_rec = queue.Queue()
 
-    #start a thread to receive
+    # Start a Rx thread
     #
     R = Thread(target=receiveTCP, args=(localIP, q_send,q_rec,))
     R.start()
- 
-    TCP_IP = conn_router("10.93.121.49")
-    print(TCP_IP) 
-    # start a thread to send data
-    #
-    while True:
-         try:
-             socket.inet_aton(TCP_IP[0])
-             # Legal
-             break
-         except socket.error:
-    #         # Not Legal
-              print("You need to enter a valid IPv4 address!\n")
-              continue
     
-    TCP_IP = conn_router("10.93.121.49")   
+    # Get a list of IPs running Toi-Chat software on the mesh network
+    #
+    try:
+        list_IPS = conn_router("10.93.121.49")
+    except 
 
-    # Separate list of IPs by space
-    #
-    list_IPS = TCP_IP.split()
-    print(list_IPS)
-    #instantiate a queue object.  We will use this to share data across 
-    #threads
-    #
-    S = Thread(target=sendTCP, args=(list_IPS[0], q_send,q_rec,))
-    S.daemon = True
-    
-    #start the threads
-    #
-    
-    S.start()
+    for TCP_IP in list_IPS:
+         try:
+            # Start a thread to send data
+            #
+            S = Thread(target=sendTCP, args=(TCP_IP, q_send,q_rec,))
+            S.daemon = True
+            
+            # Start the Tx thread
+            #
+            S.start()
+
+            # Did not fail to connect. Connection to client successful
+            # Break out of for loop
+            #
+            break
+
+         except socket.error:
+            if TCP_IP == list_IPS[len(list_IPS)]:
+                # We tried all IPs in the list and could not connect to 
+                # any. Return error to stdout informing the user
+                print("Could not connect to '" + TCP_IP + "'.\n" \
+                    "Exhausted known list of hosts")
+            else:
+                print("Could not connect to '" + TCP_IP + "'.\n" \
+                    "Trying next IP in list.")
+                pass    
 
 if __name__ == '__main__':
     main()

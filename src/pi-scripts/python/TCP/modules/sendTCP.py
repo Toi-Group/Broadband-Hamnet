@@ -20,7 +20,13 @@ def sendTCP(TCP_IP, q_send,q_rec):
     BUFFER_SIZE = 1024
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((TCP_IP, TCP_PORT))
+
+    # Try to connect to passed IP
+    #
+    try:
+        s.connect((TCP_IP, TCP_PORT))
+    except socket.error, exc:
+        raise socket.error
 
     while True:
 
@@ -52,3 +58,6 @@ def sendTCP(TCP_IP, q_send,q_rec):
             q_send.put(1)
             s.close()
             break
+
+    # Exit with normal 
+    return 0

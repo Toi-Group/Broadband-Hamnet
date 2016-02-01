@@ -40,16 +40,14 @@ def conn_router(default_gateway):
         error = ssh.stderr.readlines()
         print("error")
         print(error)
+        return None 
     else:
         print("success")
-  
-    #Parse output to extract IPs of local machines
-    #
-    IP = str(nodes).split('\\n')
-    IPs = str(IP[1]).split()
-    print(IPs)
-
+        #Parse output to extract IPs of local machines
+        #
+        nodes = str(nodes).split('\\n')
+        IPs = str(nodes[1]).split()
+        print(IPs)
     #Return a list of IPs found on the mesh network
     #
-    exit(1)
     return IPs
