@@ -23,28 +23,27 @@ def main():
     #
     R = Thread(target=receiveTCP, args=(localIP, q_send,q_rec,))
     R.start()
-
+ 
+    TCP_IP = conn_router("10.93.121.49")
+    print(TCP_IP) 
     # start a thread to send data
     #
-    # while True:
-    #     print ("\n Enter the IP of the machine you will be "
-    #         "communicating with.")
-    #     TCP_IP = input(" >> ")
-    #     try:
-    #         socket.inet_aton(TCP_IP)
-    #         # Legal
-    #         break
-    #     except socket.error:
+    while True:
+         try:
+             socket.inet_aton(TCP_IP[0])
+             # Legal
+             break
+         except socket.error:
     #         # Not Legal
-    #         print("You need to enter a valid IPv4 address!\n")
-    #         continue
+              print("You need to enter a valid IPv4 address!\n")
+              continue
     
     TCP_IP = conn_router("10.93.121.49")   
 
     # Separate list of IPs by space
     #
     list_IPS = TCP_IP.split()
-
+    print(list_IPS)
     #instantiate a queue object.  We will use this to share data across 
     #threads
     #
