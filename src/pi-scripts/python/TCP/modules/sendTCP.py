@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import socket
+import socket, sys
 
 #sendTCP
 #write what function
@@ -8,11 +8,6 @@ import socket
 #inputs and outputs
 #
 def sendTCP(TCP_IP, q_send,q_rec):
-
-    #initialize the send queue
-    #
-    q_send.put(0)
-
     #This is the port we will send to on the listening machine
     #this port needs to be 8888 on receiving side
     #
@@ -21,13 +16,23 @@ def sendTCP(TCP_IP, q_send,q_rec):
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    # Set socket connection timeout
+    #
+    s.settimeout(10) 
+
     # Try to connect to passed IP
     #
     try:
         s.connect((TCP_IP, TCP_PORT))
-    except socket.error, exc:
-        raise socket.error
-
+    except Exception:
+        s.close()
+        q_send.put(sys.exc_info()[1])
+        pass
+        return -1
+    
+    #initialize the send queue
+    #
+    q_send.put(0)
     while True:
 
         #Ensure the rec queue is not empty

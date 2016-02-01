@@ -12,7 +12,7 @@
 #  - IPs = returns the IPv4 addresses of nodes found on the mesh network in a list.
 
 # Import Modules
-import os, sys
+import os, sys, socket
 import subprocess
 
 def conn_router(default_gateway):
@@ -28,7 +28,7 @@ def conn_router(default_gateway):
     # Construct ssh command to run 'router_request_arpinf.sh' script
     #
     ssh = subprocess.Popen(['ssh', '-p', '2222', \
-        'root@' + default_gateway,'sh '  + scriptPath], \
+        'root@' + default_gateway,'sh ' + scriptPath], \
         shell=False, \
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
@@ -38,16 +38,35 @@ def conn_router(default_gateway):
     nodes = ssh.communicate()[0]
     if nodes == "":
         error = ssh.stderr.readlines()
-        print("error")
+        print("error1")
         print(error)
         return None 
     else:
-        print("success")
         #Parse output to extract IPs of local machines
         #
         nodes = str(nodes).split('\\n')
         IPs = str(nodes[1]).split()
-        print(IPs)
+
+        # Check if IPs are valid IPv4 addresses
+        #
+        valid_IPs = []
+        for TCP_IP in IPs:
+            try:
+                socket.inet_aton(TCP_IP)
+            except socket.error:
+                pass
+            # If valid add it to the array
+            #
+            valid_IPs.append(TCP_IP)
+        # Check if we have any valid IPs. Return None if we don't
+        #
+        if valid_IPs == []:
+            print("error2")
+            return None
+        print("Success in ARP request. Found IPs:")
+        print(valid_IPs)
+
+    
     #Return a list of IPs found on the mesh network
     #
-    return IPs
+    return valid_IPs
