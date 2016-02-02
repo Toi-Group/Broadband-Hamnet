@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 import sys, time
+from threading import Thread 
 from modules.conn_router import conn_router
 from modules.networking_toichat import networking_toichat
 from modules.gatewayIP import gatewayIP
+from modules.txARPinfo import txARPinfo
 
 # main program
 #
 def main():   
-    # Start the toi-chat server
+
+    # Listen on the router for new nodes
+    #
+    txARPinfo()
+
+    # Start the toi-chat server (pi)
     #
     myToiChat = networking_toichat()
     myToiChat.startServer()
@@ -76,6 +83,8 @@ def attemptFind(myToiChat):
         #
         print("Connection to a client successful.")
         return True
+
+
 
 if __name__ == '__main__':
     main()
