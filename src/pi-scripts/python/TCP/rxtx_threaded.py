@@ -1,84 +1,81 @@
 #!/usr/bin/env python3
-
-import socket
-from threading import Thread
 import sys, time
-import queue
-from modules.receiveTCP import receiveTCP
-from modules.sendTCP import sendTCP
 from modules.conn_router import conn_router
+from modules.networking_toichat import networking_toichat
 from modules.gatewayIP import gatewayIP
 
 # main program
 #
-def main():
-    
-    # Get local IP Address
+def main():   
+    # Start the toi-chat server
     #
-    localIP = socket.gethostbyname(socket.gethostname())
-    
-    q_send = queue.Queue()
-    q_rec = queue.Queue()
+    myToiChat = networking_toichat()
+    myToiChat.startServer()
 
-    # Start a Rx thread
-    #
-    R = Thread(target=receiveTCP, args=(localIP, q_send,q_rec,))
-    R.start()
-    
+    while True:
+        MESSAGE = input("Do you want to attempt to " + \
+            "find other clients? (yes|no):\n >> ")
+        if str.lower(MESSAGE) == "yes":
+            rtrn = attemptFind(myToiChat)
+            if rtrn == False:
+                MESSAGE = print("The application failed to find a " + \
+                    "valid ToiChat runner.")
+        elif str.lower(MESSAGE) == "no":
+            break
+        else:
+            print("Please specify yes or no.")
+
+    while True:
+        MESSAGE = input("Toi-Chat server is running in the " + \
+             "background. Spell 'shutdown' when you are done running " + \
+             "the program. (shutdown):\n >> ")
+        if str.lower(MESSAGE) == "shutdown":
+            break
+        else:
+            print("Please specify 'shutdown'.")
+
+    # Exit Main program runner.
+    print("Shutting down application...")
+    myToiChat.stopServer()
+    print("Shutting successful. \n\n Goodbye.")
+    return 0
+
+def attemptFind(myToiChat):
     # Get a list of IPs running Toi-Chat software on the mesh network
     #
-    while True:
-        list_IPS = conn_router(gatewayIP())
+    list_IPS = conn_router(gatewayIP())
 
-        # Check to see if there are any IPs in the returned ARP list
-        #
-        if list_IPS == None:
-            # List of IPS is empty so we wait five seconds and try again
-            #
-            time.sleep(5)
-            continue
-
-        # list_IPS is not empty so break out of loop
-        #
-        break
+    # Check to see if there are any IPs in the returned ARP list
+    #
+    if list_IPS == None:
+        return False
 
     for TCP_IP in list_IPS:
+        # Print to stdout what we are trying to connect to
+        #
         print("Trying to connect to '" + TCP_IP + "'...")
-        # Start a thread to send data
-        #
-        S = Thread(target=sendTCP, args=(TCP_IP, q_send,q_rec,))
-        S.daemon = True
-        # Start the Tx thread
-        #
-        S.start()
         
-        # Monitor to see if threw execption
-        #
-        kind = q_send.get(block=True)
-
-        # Check if what is on queue is an error.
-        #
-        if kind != None:
+        try:
+            myToiChat.attemptToiChatConn(TCP_IP)
+        except Exception as e:
             if TCP_IP == list_IPS[len(list_IPS)-1]:
                 # We tried all IPs in the list and could not connect to 
                 # any. Return error to stdout informing the user
-                print("Could not connect to '" + TCP_IP + "'."\
-                    #"Exited with status: \n" + kind + "\n" \
-                    "Exhausted known list of hosts")
+                print("Could not connect to '" + TCP_IP + "'.\n" + \
+                    "Exited with status: \n\t" + str(e) + "\n" \
+                    "Exhausted known list of hosts.\n\n")
                 pass
+                return False
             else:
-                print("Could not connect to '" + TCP_IP + "'."\
-                    #"Exited with status: \n" + kind + "\n" \
+                print("Could not connect to '" + TCP_IP + "'... " + \
+                    "Exited with status: \n\t" + str(e) + "\n" \
                     "Trying next IP in list.")
-                continue
-
+                continue 
         # Did not fail to connect. Connection to client successful
         # Break out of for loop
         #
-        print("breaking")
-        break
-    print("Shutting down application")
-    q_rec.put(1)
+        print("Connection to a client successful.")
+        return True
 
 if __name__ == '__main__':
     main()

@@ -36,10 +36,8 @@ def conn_router(default_gateway):
     # Take output of command and return
     #
     nodes = ssh.communicate()[0]
-    if nodes == "":
+    if len(nodes) < 7:
         error = ssh.stderr.readlines()
-        print("error1")
-        print(error)
         return None 
     else:
         #Parse output to extract IPs of local machines
@@ -61,10 +59,9 @@ def conn_router(default_gateway):
         # Check if we have any valid IPs. Return None if we don't
         #
         if valid_IPs == []:
-            print("error2")
             return None
-        print("Success in ARP request. Found IPs:")
-        print(valid_IPs)
+        print("Success in ARP request. Found IPs:\n\t" + \
+            str(valid_IPs) + "\n\n") 
 
     
     #Return a list of IPs found on the mesh network
