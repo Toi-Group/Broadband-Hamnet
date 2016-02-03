@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys, time
 from modules.conn_router import conn_router
-from modules.networking_toichat import networking_toichat
+import modules.networking_toichat
 from modules.gatewayIP import gatewayIP
 
 # main program
@@ -9,7 +9,7 @@ from modules.gatewayIP import gatewayIP
 def main():   
     # Start the toi-chat server
     #
-    myToiChat = networking_toichat()
+    myToiChat = toiChatServer()
     myToiChat.startServer()
 
     while True:
