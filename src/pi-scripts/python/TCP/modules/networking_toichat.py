@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # 
-# Python Class:
-#   toiChatServer 
-#   toiChatClient 
+# Python toiChat Class:
+#   Services: 
+#       toiChatServer 
+#       toiChatClient 
 #
 # Created on: 02/01/2016
 # Author: Toi-Group
 #
 
-from protobuf.ToiChatProtocol import ToiChatMessage
+import protobuf.ToiChatProtocol
 import socket
 from threading import Thread
 import queue
@@ -18,7 +19,17 @@ import struct, sys
 #
 class toiChatServer():
 
-    CONST_EXIT_THREAD = "EXITTHREAD"
+    # String constant to send to queues when they shoudl quit
+    #
+    CONST_EXIT_QUEUE = "EXITTHREAD"
+
+    # Types of messages to expect
+    #
+    getType={
+        0:ToiChatMessage.DnsMessage,
+        1:ToiChatMessage.ServerMessage,
+        2:ToiChatMessage.OneToOneMessage
+    }
 
     # -- START CLASS CONSTRUCTOR -- 
     #
@@ -26,15 +37,35 @@ class toiChatServer():
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xPORT_TOICHAT=5005):
+    def __init__(self, xHostname, xIP, xDescription, xPORT_TOICHAT=5005):
         # Define port ToiChat uses to communicate
         #
         self.PORT_TOICHAT = xPORT_TOICHAT;
 
-        # Create a client recv clientSockection handler queue
+        # Define this machines ToiChat Instance
         #
-        self.socketClientQueue = queue.Queue()
-        
+        self.myToiChat = ToiChatProtocol.ToiChatClient()
+        self.myToiChat.clientName = xHostname
+        self.myToiChat.clientId = xIP
+        self.myToiChat.description = xDescription
+
+        # Server is by default set to disabled
+        #
+        self.stopServer = False
+
+        # Create a communication handler thread queue
+        #
+        self.communicateQueue = queue.Queue()
+
+        # Start the client recv connection handler thread
+        #
+        self.S = Thread(target=self.__pi_server_toichat__).start()
+
+        # Start the communication handler thread
+        #
+        C = Thread(target=self.__communicate__)
+        C.daemon = True
+        C.start()
     
     # -- START CLASS DESTRUCTOR -- 
     #
@@ -42,35 +73,41 @@ class toiChatServer():
     #
     # -- END CLASS DESTRUCTOR -- 
     def __del__(self):
-        self.stopServer
+        self.stopServer()
     
     # -- START FUNCTION DESCR --
     #
     # Starts a thread listening on PORT_TOICHAT for incoming socket 
-    # clientSockections. The incoming socket is then handed off to a client
-    # recv thread to receive the full message. Finally the message
-    # is handed off to a message handler thread to determine what to do
-    # with the received message.
+    # clientSockections. 
     #
     # Inputs:
     #  None
     #
     # Outputs:
-    #   - Three threads to manage BG application services.  
+    #   - A thread running server listen operations running
     #
     # -- END FUNCTION DESCR -- 
     def startServer(self):
+        # If break out of loop print we are closing the sever
+        #
+        print("Attempting to start ToiChat server...")
+
+        # Loop the server listener until stop server is true
+        #
+        self.stopServer = False
+
         # Start the server listener thread
         #
         S = Thread(target=self.__pi_server_toichat__)
         S.daemon = True
         S.start()
-        
-        # Start the client recv clientSockection handler thread
-        #
-        C = Thread(target=self.__talkClient__)
-        C.start()
 
+        # Determine if server listener thread stopped correctly
+        #
+        if self.S.is_alive() == True:
+            print("\tAttempt to start server was successful!\n\n")
+        else:
+            print("\tAttempt to start server failed.\n\n")
         return 1
 
     # -- START FUNCTION DESCR --
@@ -78,278 +115,36 @@ class toiChatServer():
     # Stop all threads created by startServer
     #
     # Inputs:
-    #  None
+    #   - A thread running server listen operations running
     #
     # Outputs:
-    #   - Stops two threads to manage BG application services. The third
-    #       server_listener thread was a daemon process that will close
-    #       upon application closure. 
+    #   - A thread running server listen operations stopped
     #
     # -- END FUNCTION DESCR -- 
     def stopServer(self):
-        # stop the client recv clientSockection handler thread
-        #
-        self.socketClientQueue.put([self.CONST_EXIT_THREAD, ''])
-
-        return 1
-
-    # -- START FUNCTION DESCR -- 
-    #
-    # Open a port on the PI to act as the ToiChat server listener.
-    #
-    # Inputs:
-    #  - PORT_TOICHAT = Port the server should listen on
-    #
-    # Outputs:
-    #  - socketClientQueue = output is on the socketClientQueue queue that  
-    #       contains client sockets waiting to be processed. 
-    #
-    #
-    # -- END FUNCTION DESCR -- 
-    def __pi_server_toichat__(self):
-        # Create a tuple with listening on localhost and PORT_TOICHAT
-        #
-        SERVER = ('', self.PORT_TOICHAT)
-
-        # Begin process of accepting incoming clientSockection on designated port
-        #
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            # Bind to localhost on PORT_TOICHAT 
-            #
-            s.bind(SERVER)
-
-            # Allow for 5 clients to enter queue
-            #
-            s.listen(5)
-
-            while True:
-                clientSock, addr = s.accept()
-
-                # When a clientSockection is found put it into the processing
-                # message queue.
-                #
-                self.socketClientQueue.put(clientSock)
-        
         # If break out of loop print we are closing the sever
         #
-        print("Closing ToiChat server")
-        return 1
+        print("Attempting to stop ToiChat server...")
 
-    # -- START FUNCTION DESCR -- 
-    #
-    # Processes the client seen on socket that contacted the
-    # ToiChat software. 
-    #
-    # Inputs:
-    #  - socketClientQueue = input is on the socketClientQueue that  
-    #       clientSock connections
-    #
-    # Outputs:
-    #  - None
-    #
-    # -- END FUNCTION DESCR -- 
-    def __talkClient__(self):
-        while True:
-            # Get a client socket clientSockection from server listen thread
-            #
-            clientSock = self.socketClientQueue.get()
-
-            # Get if queueEXIT STATUS is true. Stop thread if true.
-            #
-            if clientSock == self.CONST_EXIT_THREAD:
-                break
-            
-            # Receive the first four bytes containing the length of the  
-            # message
-            #
-            raw_MSGLEN = self.__recvall__(clientSock, 4)
-
-            # Ensure the length of the message is not empty
-            #
-            if not raw_MSGLEN:
-                clientSock.close()
-                continue
-
-            # Get the length of the message from the data header
-            #
-            MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
-
-            # Output the message sent by the client to message parser 
-            # thread. Also pass the type of message
-            #
-            rawToiChatBuffer = self.__recvall__(clientSock, MSGLEN))
-            
-            # Process RAW MESSAGE
-            __processMessage__(clientSock, rawToiChatBuffer)
-
-            # Close the clientSockection to the client and get the next
-            # item in the queue.
-            #
-            clientSock.close()
-        return 1
-
-
-    # -- START FUNCTION DESCR --
-    #
-    #
-    #
-    # Inputs:
-    #
-    #
-    # Outputs:
-    # 
-    #
-    # -- END FUNCTION DESCR --
-    def __processMessage__(self, clientSocket, rawToiChatBuffer):
-        #Convert from raw binary data
+        # Tell the server listener thread to break accepting connections
         #
-        myToiChatMessage.ParseFromString(rawToiChatBuffer)
-        
-        # Gather Header Information
+        self.stopServer = True
+
+        # Wait until the listen thread is over
         #
-        clientName = myToiChatMessage.clientName
-        clientId = myToiChatMessage.clientId
-        description = myToiChatMessage.description
+        self.S.join()
 
-        for MsgItem in myToiChatMessage:
-            if MsgItem.ItemType == getType(0):
-                handleDnsNewClient(MsgItem)
-            elif MsgItem.ItemType == getType(1):
-                handleRequestDns(clientSocket, MsgItem)
-            else:
-                print("Unknown MsgItem Type.")
-
-    # -- START DICTIONARY DECLARATION --
-    #
-    # Dictionary containing message numeric id with 
-    #
-    # Inputs:
-    #  None
-    #
-    # Outputs:
-    #   - Three threads to manage BG application services.  
-    #
-    # -- END FUNCTION DESCR -- 
-    MSG_TYPE = {
-        0: ToiChatMessage.RegClient,
-        1: ToiChatMessage.RequestArp,
-        2: ToiChatMessage.SendArp,
-        3: ToiChatMessage.OneToOne,
-    }
-
-    # -- START FUNCTION DESCR --
-    #
-    # Returns the message type
-    #
-    # Inputs:
-    #  None
-    #
-    # Outputs:
-    #   - Three threads to manage BG application services.  
-    #
-    # -- END FUNCTION DESCR -- 
-    def getType(in):
-        return MSG_TYPE[in]
-
-    # -- START FUNCTION DESCR -- 
-    #
-    # From socket received message up to MSGLEN. 
-    #
-    # Inputs:
-    #  - mysocket = socket clientSockected a client machine
-    #  - MSGLEN = received the message on the socket up to this length.
-    #
-    # Outputs:
-    #  - data_packet = outputs message in binary format.
-    #
-    #
-    # -- END FUNCTION DESCR -- 
-    def __recvall__(self, mysocket, MSGLEN):
-
-        # Get the client's IP
+        # Determine if server listener thread stopped correctly
         #
-        clientIP = mysocket.getpeername()
-
-        # Initiate an array with the message being sent by client
-        #
-        data = b''
-        
-        # While the client is still sending a message
-        #
-        while len(data) < MSGLEN:
-            # Keep reading message from client
-            #
-            data_packet = mysocket.recv(MSGLEN - len(data))
-            if not data_packet:
-                print("clientSockection to client '" + str(clientIP) + "' lost.")
-                return None
-
-            # Append the data to the overall message
-            #
-            data += data_packet
-        return data_packet
-
-# ToiChat Client Talker
-#
-class toiChatClient():
-
-    # -- START CLASS CONSTRUCTOR -- 
-    #
-    # ToiChat class handling client side communication
-    #
-    # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xHostname, xIP, xDescription):
-        # Create a ToiChatClient containing this machines information
-        #
-        self.myToiChat = ToiChatProtocol.ToiChatClientRunner()
-        self.myToiChat.clientName = xHostname
-        self.myToiChat.clientId = xIP
-        self.myToiChat.description = xDescription        
-    
-    # -- START CLASS DESTRUCTOR -- 
-    #
-    # 
-    #
-    # -- END CLASS DESTRUCTOR -- 
-    def __del__(self):
-
-    # -- START FUNCTION DESCR --
-    #
-    # Asks server to register the list of ChatRunners seen in lstChatRunner
-    #
-    # Inputs:
-    #   lstChatRunner = list of ToiChatClientRunner messages
-    #
-    # Outputs:
-    # 
-    #
-    # -- END FUNCTION DESCR --
-    def doRegClient(serverSocket, lstChatRunner):
-        # Create a new DnsRegisterRequest
-        #
-        dnsRegister = ToiChatProtocol.DnsRegisterRequest()
-        dnsRegister.registerBy = self.myToiChat
-
-        # Loop through each item in list of items to register
-        #
-        for chatRunner in lstChatRunner:
-            dnsRegister.clientList.add(chatRunner)
-
-        # Send populated dnsRegister Request to Server
-        #
-        __sendToiMessage__(serverSocket, dnsRegister.SerializeToString())
-
-        # Await response saying it was a success
-        #
-
-
-        # Return serialized data containing message
-        #
+        if self.S.is_alive() == True:
+            print("\tAttempt to stop server failed.\n\n")
+        else:
+            print("\tAttempt to stop server was successful!\n\n")
         return 1
 
     # -- START FUNCTION DESCR --
     #
-    # Tries to clientSockect to a ToiChat server. May raise an exception if 
+    # Tries toiServerIP ToiChat Server. May raise an exception if 
     # clientSockection is unsuccessful. 
     #
     # Inputs:
@@ -360,62 +155,242 @@ class toiChatClient():
     #       the server successful added
     #
     # -- END FUNCTION DESCR -- 
-    def attemptServer(self, toiServerIP, PORT_TOICHAT=5005):
-        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def attemptServer(self, toiServerIP, toiServerPORT=self.PORT_TOICHAT):
+        serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Set socket clientSockection timeout
         #
-        serverSocket.settimeout(10) 
+        serverSock.settimeout(10) 
 
         # Try to clientSockect to passed IP
         #
-        serverSocket.clientSockect((toiServerIP, PORT_TOICHAT))
+        serverSock.clientSockect((toiServerIP, toiServerPORT))
         
-        # If successful connection, tell the server to register this machine in it DNS
+        # If successful connection, tell the server to register this 
+        # machine in it DNS.
         #
-        RegClient(serverSocket, myToiChat)
 
-        serverSocket.close()
+        serverSock.close()
         return 1
 
-    # -- START FUNCTION DESCR --
+    # --------------------------------------------------------------------
+    # ------------------- START OF PRIVATE FUNCTIONS ---------------------
+    # --------------------------------------------------------------------
+    # -- START FUNCTION DESCR -- 
     #
-    #
+    # Open a port on the PI to act as the ToiChat server listener.
     #
     # Inputs:
-    #
+    #  - PORT_TOICHAT = Port the server should listen on
     #
     # Outputs:
-    # 
+    #  - communicateQueue = output is on the communicateQueue queue that  
+    #       contains client sockets waiting to be processed. 
     #
-    # -- END FUNCTION DESCR --
-    def __processMessage__(self, serverSocket, rawToiChatBuffer):
-        #Convert from raw binary data
+    #
+    # -- END FUNCTION DESCR -- 
+    def __pi_server_toichat__(self):
+        # Create a tuple with listening on localhost and PORT_TOICHAT
         #
-        myToiChatMessage.ParseFromString(rawToiChatBuffer)
+        SERVER = ('', self.PORT_TOICHAT)
+
+        # Begin process of accepting incoming clientSockection on 
+        # designated port
+        #
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSock:
+            # Bind to localhost on PORT_TOICHAT 
+            #
+            serverSock.bind(SERVER)
+
+            # Allow for 5 clients to enter queue
+            #
+            serverSock.listen(5)
+
+            # Set socket serverSocket timeout to check if we should stop
+            # running the server
+            #
+            serverSock.settimeout(10) 
+
+            while True:
+                # Accept incoming client connections
+                #
+                clientSock, addr = serverSock.accept()
+
+                # Check if we have a valid socket connection to a client
+                #
+                if clientSock:
+                    # When a clientSockection is found put it into the 
+                    # processing message queue.
+                    #
+                    self.communicateQueue.put([clientSock, None])
+                
+                # Check if we should stop listening 
+                #
+                if self.stopServer = True:
+                    break
+        return 1
+
+    # -- START FUNCTION DESCR -- 
+    #
+    # From socket received message up to MSGLEN. 
+    #
+    # Inputs:
+    #  - clientSock = socket clientSockected a client machine
+    #  - MSGLEN = received the message on the socket up to this length.
+    #
+    # Outputs:
+    #  - data_packet = outputs message in binary format.
+    #
+    #
+    # -- END FUNCTION DESCR -- 
+    def __recvall__(self, clientSock, MSGLEN):
+        # Get the client's IP
+        #
+        clientIP = clientSock.getpeername()
+
+        # Initiate an array with the message being sent by client
+        #
+        data = b''
         
+        # While the client is still sending a message
+        #
+        while len(data) < MSGLEN:
+            # Keep reading message from client
+            #
+            data_packet = clientSock.recv(MSGLEN - len(data))
+            if not data_packet:
+                print("clientSockection to client '" + \
+                    str(clientIP) + "' lost.")
+                return None
+
+            # Append the data to the overall message
+            #
+            data += data_packet
+        return data_packet
+
+
+    # -- START FUNCTION DESCR -- 
+    #
+    # Processes the message with client seen on socket passed
+    #
+    # Inputs:
+    #  - communicateQueue = input is on the communicateQueue that  
+    #       messages are put on to either send or receive.
+    #
+    # Outputs:
+    #  - Either sends a message or receive a message that
+    #
+    # -- END FUNCTION DESCR -- 
+    def __communicate__(self):
+        while True:
+            # Get a client socket clientSockection from server listen 
+            # thread
+            #
+            [clientSock, MSG] = self.communicateQueue.get()
+
+            # Get if queueEXIT STATUS is true. Stop thread if true.
+            #
+            if MSG == self.CONST_EXIT_QUEUE:
+                break
+            
+            # Check if socket is still open
+            #
+            if clientSock:
+                # Check if MSG is null to determine whether we are 
+                # receiving or sending a message to client
+                #
+                if MSG = None:
+                    # Receive the first four bytes containing the length    
+                    # of the message
+                    #
+                    raw_MSGLEN = self.__recvall__(clientSock, 4)
+
+                    # Ensure the length of the message is not empty
+                    #
+                    if not raw_MSGLEN:
+                        clientSock.close()
+                        continue
+
+                    # Get the length of the message from the data header
+                    #
+                    MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+
+                    # Output the message sent by the client to message parser 
+                    # thread. Also pass the type of message
+                    #
+                    rawBuffer = self.__recvall__(clientSock, MSGLEN))
+
+                    # Process RAW MESSAGE
+                    #
+                    self.messageProcess(clientSock, rawBuffer)
+                else:
+                    # We are sending information back to the client
+                    #
+                    self.__sendToiMessage__(clientSock, MSG)
+
+            # Client closed connect so we close connection too. 
+            #
+            clientSock.close()
+        return 1
+
 
     # -- START FUNCTION DESCR --
     #
-    # Sends a message to the server seen on the socket. This function
-    # will append the length of the message to the beginning to ensure
-    # the full message is sent. 
+    # Sends a ToiChatMessage over a socket by appending the length of the  
+    # message to the beginning to ensure the full message is sent. 
     #
     # Inputs:
-    #  - mySocket = Server to send message to
-    #  - MSG = Message user is trying to send
+    #  - clientSock = Client socket we will send message to. 
+    #  - MSG = Serialized Message user is trying to send
     #
     # Outputs:
     #   - Returns true if message was sent successfully. 
     #
     # -- END FUNCTION DESCR -- 
-    def __sendToiMessage__(self, mySocket, MSG):
-
+    def __sendToiMessage__(self, clientSock, decodedMsg):
+        # Convert ToiChatMessage to binary stream.
+        # 
+        encodedMsg = SerializeToString(decodedMsg)
+        
         # Append the length of the message to the beginning
         #
-        MSG = struct.pack('>I', len(MSG)) + MSG
+        encodedMsg = struct.pack('>I', len(encodedMsg)) + encodedMsg
 
-        # Send the entire message.
+        # Put message on communicate queue.
         #
-        mySocket.sendall(MSG)
+        self.communicateQueue.put([clientSock, encodedMsg])
         return 1
+    
+
+    # -- START FUNCTION DESCR --
+    #
+    # Decodes message based on its type
+    #
+    # Inputs:
+    #   clientSocket = 
+    #   rawBuffer = 
+    #
+    # Outputs:
+    # 
+    #
+    # -- END FUNCTION DESCR --
+    def __messageProcess__(self, clientSock, rawBuffer):
+        # Create a ToiChat Message Type 
+        #
+        decodeMsg = ToiChatMessage()
+
+        # Decode the raw message 
+        #
+        decodeMsg.ParseFromString(rawBuffer)
+        
+        # Find the type of message sent
+        #
+        msgType = decodeMsg.WhichOneOf("messageType")
+
+        if msgType == getType[0]:
+            handleDnsNewClient(decodeMsg.msgType)
+        elif msgType == getType[0]:
+            handleRequestDns(decodeMsg.msgType)
+        else:
+            print("Unknown MsgItem Type.")
+        return
