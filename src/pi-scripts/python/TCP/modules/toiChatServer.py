@@ -11,6 +11,7 @@
 
 import protobuf.ToiChatProtocol_pb2
 import socket
+from io import StringIO
 from threading import Thread
 import queue
 import struct, sys
@@ -33,21 +34,22 @@ class toiChatServer():
 
     # -- START CLASS CONSTRUCTOR -- 
     #
-    # ToiChat class handling server side communication handling
+    # ToiChat class handling server side communication 
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xHostname, xIP, xDescription, xPORT_TOICHAT=5005):
+    def __init__(self, xHostname, xDescription="", xPORT_TOICHAT=5005):
+        # Describe this toichatserver hostname/callsign
+        #
+        self.serverName = xHostname
+        
+        # Misc information about this toichatserver
+        #
+        self.description = xDescription
+
         # Define port ToiChat uses to communicate
         #
         self.PORT_TOICHAT = xPORT_TOICHAT;
-
-        # Define this machines ToiChat Instance
-        #
-        self.myToiChat = ToiChatProtocol.ToiChatClient()
-        self.myToiChat.clientName = xHostname
-        self.myToiChat.clientId = xIP
-        self.myToiChat.description = xDescription
 
         # Server is by default set to disabled
         #
@@ -59,17 +61,13 @@ class toiChatServer():
 
         # Start the client recv connection handler thread
         #
-        self.S = Thread(target=self.__pi_server_toichat__).start()
+        self.S = Thread(target=self.__pi_server_toichat__)
 
         # Start the communication handler thread
         #
-        C = Thread(target=self.__communicate__)
-        C.daemon = True
-        C.start()
+        self.C = Thread(target=self.__communicate__)
+        self.C.daemon = True
 
-        # Where to print server logs
-        #
-        #self.
     
     # -- START CLASS DESTRUCTOR -- 
     #
@@ -91,38 +89,100 @@ class toiChatServer():
     #   - A thread running server listen serverMsg.operations running
     #
     # -- END FUNCTION DESCR -- 
-    def startServer(self, outPut):
-        if self.stopServer == True:
-            print("Server already started...")
-            return 1
-        # If break out of loop print we are closing the sever
-        #
+    def startServer(self):
         print("Attempting to start ToiChat server...")
 
-        # Loop the server listener until stop server is true
+        # Check to see if server listener thread has already started
         #
-        self.stopServer = False
-
-        # Start the server listener thread
+        if (self.S.is_alive() == False):
+            self.stopServer = False
+            # Attempt to start the server listener
+            #
+            try:
+                self.S.start()
+            except RuntimeError as e:
+                print("\tAttempt to start server failed.\n\n")
+                return -1
+        # Check to see if message processor thread has already started
         #
-        S = Thread(target=self.__pi_server_toichat__)
-        S.daemon = True
-        S.start()
-
-        # Determine if server listener thread stopped correctly
+        elif (self.C.is_alive() == False):
+            try:
+                # Attempt to start the message processor thread
+                #
+                self.C.start()
+            except RuntimeError as e:
+                print("\tAttempt to start server failed.\n\n")
+                return -1
+        # Both server dependencies are already started
         #
-        if self.S.is_alive() == True:
-            print("\tAttempt to start server was successful!\n\n")
-            return 1
         else:
-            print("\tAttempt to start server failed.\n\n")
-        return -1
+            print("\tServer already started.\n\n")
+            return 1
+        # Server dependencies started successfully.
+        #
+        print("\tAttempt to start server was successful!\n\n")
+        return 1
 
     # -- START FUNCTION DESCR --
     #
-    # Sends commands to another toiChatSever instance to perform operations
-    # remotely. May raise an exception if clientSockection is unsuccessful.
-    # . 
+    # Stop all threads created by startServer
+    #
+    # Inputs:
+    #   - A thread running server listen operations running
+    #
+    # Outputs:
+    #   - A thread running server listen operations stopped
+    #
+    # -- END FUNCTION DESCR -- 
+    def stopServer(self):
+        # If break out of loop print we are closing the server
+        #
+        print("Attempting to stop ToiChat server...")
+
+        # Tell the server listener thread to break accepting connections
+        #
+        self.stopServer = True
+
+        # Stop the communicateQueue thread handler 
+        # 
+        self.communicateQueue.put(self.CONST_EXIT_THREAD)
+
+        # Wait for both server threads to close
+        #
+        self.S.join(3.0)
+        self.C.join(3.0)
+
+        # Determine if server listener thread stopped correctly
+        #
+        if (self.S.is_alive() or self.C.is_alive()) == True:
+            print("\tAttempt to stop server failed.\n\n")
+            return -1
+        else:
+            print("\tAttempt to stop server was successful!\n\n")
+        return 1
+
+    # -- START FUNCTION DESCR --
+    #
+    # Returns the server status.
+    #
+    # Inputs:
+    #   None
+    #
+    # Outputs:
+    #   - Returns true if server is running else false.
+    #
+    # -- END FUNCTION DESCR -- 
+    def statusServer(self):
+        if (self.S.is_alive() and self.S.is_alive()) == True:
+            return 1
+        else:
+            return -1
+
+        # -- START FUNCTION DESCR --
+
+    #
+    # Sends commands to a ToiChatServer instance to perform operations
+    # remotely. May raise an exception if toiChatServer can not be reached
     #
     # Inputs:
     #   - whoSend = (Multiple Possibilities)
@@ -138,46 +198,23 @@ class toiChatServer():
     #   None
     #
     # -- END FUNCTION DESCR --
-    def sendRemoteServerMessage(self, serverMsg, toiServerIP, \
-        toiServerPORT=self.PORT_TOICHAT):
-        # Check if we have a socket defined already. Assumes a message
-        # is attached if a valid socket is passed.
-        #
-        if type(toiServerIP) == socket:
-            self.communicateQueue.put([toiServerIP, serverMsg])
-
-        # Else do a DNS lookup
-        #
-        remoteToiServerIP = dnsGetIP(toiServerIP)
-        
-        # Create a new socket to the client
-        #
-        clientSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Set socket clientSockection timeout. If server doesn't respond
-        # if five seconds say the server can not be contacted. 
-        #
-        clientSock.settimeout(5.0) 
-
-        # Try to connect to passed IP
-        #
-        clientSock.connect((remoteToiServerIP, toiServerPORT))
-
+    def createRemoteServerMessage(self, msgCMD):
         # Create a New Server Message with the command seen from serverMsg
         #
-        if serverMsg.lower() == ("stop" or "start"):
+        if msgCMD.lower() == ("stop" or "start" or "status"):
             myServerMessage = ServerMessage()
             # Create the server message with the appropriate command
             #
             if serverMsg == "stop":
                 reponseMessage.operation = "STOP"
-            else:
+            elif serverMsg == "start":
                 reponseMessage.operation = "START"
-
+            else:
+                reponseMessage.operation = "STATUS"
+            
             # The the message with the correct command
             #
-            self.communicateQueue.put([clientSock, serverMsg])
-            return 1
+            return serverMsg
         else:
             self.printServerUsage()
             return -1
@@ -313,7 +350,7 @@ class toiChatServer():
                     #
                     clientIP = clientSock.getpeername()
 
-                    print("'" + str(clientIP) + " - connected")
+                    print("'" + str(clientIP) + "'' - connected")
                     # Receive the first four bytes containing the length    
                     # of the message
                     #
@@ -336,11 +373,11 @@ class toiChatServer():
 
                     # Process RAW MESSAGE
                     #
-                    self.messageProcess(clientSock, rawBuffer)
+                    self.__messageProcess__(clientSock, rawBuffer)
                 else:
                     # We are sending information back to the client
                     #
-                    self.__sendToiChatMessage__(clientSock, MSG)
+                    return self.__sendToiChatMessage__(clientSock, MSG)
 
             # Client closed connect so we close connection too. 
             #
@@ -417,42 +454,53 @@ class toiChatServer():
         # Command Type messages
         #
         elif serverMsg.operation == ("STOP" or "START" or "STATUS"):
+            # Capture output of server to variable
+            #
+            old_stdout = sys.stdout
+            old_stderr = sys.stderr
+            sys.stdout = mystdout = StringIO()
+            sys.stdout = mystderr = StringIO()
+
             responseMsgDescription = ""
             # Perform command
             #
             if serverMsg.operation == "STOP":
-                operationStatus = \
-                    responseMelf.stopServer(msgDescription)
+                operationStatus = self.stopServer()
             elif serverMsg.operation == "START":
-                operationStatus = \
-                    responseMelf.startServer(msgDescription)
+                operationStatus = self.startServer()
             # If the remote server is asking for status return that we
             # are alive and responding.
             #
             elif serverMsg.operation == "STATUS":
-                operationStatus = 1
+                operationStatus = self.statusServer()
             
             # Create response server message
             #
             reponseMessage = ServerMessage()
-            reponseMessage.description = msgDescription
+            reponseMessage.description = mystdout
+            reponseMessage.descriptionErr = mystderr
+
+            # Reset stdout and stderr back to console
+            #
+            sys.stdout = old_stdout
+            sys.sys.stderr = old_stderr
 
             # Check if command was successful
             #
             if operationStatus == 1:
                 reponseMessage.operation = "SUCCESS"
-                self.sendRemoteServerMessage(reponseMessage, clientSock)
+                self.communicateQueue.put([clientSock, reponseMessage])
                 return 1
             else:
                 reponseMessage.operation = "FAILED"
-                self.sendRemoteServerMessage(reponseMessage, clientSock)
+                self.communicateQueue.put([clientSock, reponseMessage])
                 return -1
            #
            # We do not close the clientSocket since we expect a response
            #
 
         # If could not recognize the response || command message type
-        # return UkNOWN to send sever
+        # return UkNOWN to send server
         #
         else:
             # Create response server message
@@ -465,7 +513,7 @@ class toiChatServer():
 
             # Tell the receiving client the command is not known
             #
-            self.sendRemoteServerMessage(clientSock, reponseMessage)
+            self.createRemoteServerMessage(clientSock, reponseMessage)
 
             # Message type does not invoke a response so we close the
             # socket to the client
