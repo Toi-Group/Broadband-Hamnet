@@ -11,7 +11,6 @@
 
 import protobuf.ToiChatProtocol_pb2
 import socket
-from io import StringIO
 from threading import Thread
 import queue
 import struct, sys
@@ -28,7 +27,7 @@ class toiChatServer():
     #
     getType={
         0:ToiChatMessage.DnsMessage,
-        1:ToiChatMessage.OneToOneMessage
+        1:ToiChatMessage.ChatMessage
     }
 
     # -- START CLASS CONSTRUCTOR -- 
@@ -93,7 +92,7 @@ class toiChatServer():
                 self.S.start()
             except RuntimeError as e:
                 print("\tAttempt to start server failed.\n\n")
-                return -1
+                return 0
         # Check to see if message processor thread has already started
         #
         elif (self.C.is_alive() == False):
@@ -103,7 +102,7 @@ class toiChatServer():
                 self.C.start()
             except RuntimeError as e:
                 print("\tAttempt to start server failed.\n\n")
-                return -1
+                return 0
         # Both server dependencies are already started
         #
         else:
@@ -147,7 +146,7 @@ class toiChatServer():
         #
         if (self.S.is_alive() or self.C.is_alive()) == True:
             print("\tAttempt to stop server failed.\n\n")
-            return -1
+            return 0
         else:
             print("\tAttempt to stop server was successful!\n\n")
         return 1
@@ -167,7 +166,7 @@ class toiChatServer():
         if (self.S.is_alive() and self.S.is_alive()) == True:
             return 1
         else:
-            return -1
+            return 0
 
         # -- START FUNCTION DESCR --
 
@@ -361,47 +360,14 @@ class toiChatServer():
         if msgType == self.getType[0]:
             decodeDnsMsg = DnsMessage()
             decodeDnsMsg.ParseFromString(decodedToiMessage)
-            handleDnsMessage(clientSock, decodeDnsMsg)
+            print(decodeDnsMsg)
+            #handleDnsMessage(decodeDnsMsg)
         elif msgType == self.getType[1]:
-            decodeOneMsg = OneToOne()
-            decodeOneMsg.ParseFromString(decodedToiMessage)
-            handleDnsMessage(clientSock, decodeOneMsg)
+            decodeChatMsg = ChatMessage()
+            decodeChatMsg.ParseFromString(decodedToiMessage)
+            #handleChatMessage(decodeChatMsg)
         else:
             print("Unknown MsgItem Type.")
+        clientSock.close()
         return 1
 
-    # -- START FUNCTION DESCR --
-    #
-    # Sends a ToiChatMessage over a socket by appending the length of the
-    # message to the beginning to ensure the full message is sent. 
-    #
-    # Inputs:
-    #  - clientSock = Client socket we will send message to. 
-    #  - MSG = Serialized Message user is trying to send
-    #
-    # Outputs:
-    #   - Returns true if message was sent successfully. 
-    #
-    # -- END FUNCTION DESCR -- 
-    def __sendToiChatMessage__(self, clientSock, rawMsg):
-        # Create a new ToiChatMessage object
-        #
-        decodedToiMessage = ToiChatMessage()
-
-        # Input the message into the ToiChatMessage
-        #
-        decodedToiMessage.msgType = rawMsg
-
-        # Convert ToiChatMessage to binary stream.
-        # 
-        encodedToiMessage = decodedToiMessage.SerializeToString()
-        
-        # Append the length of the message to the beginning
-        #
-        encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
-            encodedToiMessage
-
-        # Put message on communicate queue.
-        #
-        self.communicateQueue.put([clientSock, encodedToiMessage])
-        return 1

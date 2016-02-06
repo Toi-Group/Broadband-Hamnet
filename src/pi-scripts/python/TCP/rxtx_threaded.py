@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
-import sys, time
+import sys
 import modules.toiChatServer
 import modules.toiChatClient
 
 # main program
 #
-def main():   
+def main():
     # Start the toi-chat server
     #
-    myToiChatServer = toiChatServer("KC3GIH")
+    myToiChatServer = toiChatServer()
     myToiChatServer.startServer()
-
-    myToiChatClient == toiChatClient("KC3GIH") 
 
     while True:
         MESSAGE = input("Do you want to attempt to " + \
             "find other clients? (yes|no):\n >> ")
         if str.lower(MESSAGE) == "yes":
-            rtrn = myToiChatClient.attemptFind()
-            if rtrn == False:
-                MESSAGE = print("The application failed to find a " + \
+            callSign = input("What is your call sign?:\n >>  ")
+            # Create toi-chat client
+            #
+            myToiChatClient == toiChatClient(callSign) 
+            if not myToiChatClient.attemptFind():
+                print("The application failed to find a " + \
                     "valid ToiChat runner.")
         elif str.lower(MESSAGE) == "no":
             break

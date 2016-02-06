@@ -9,8 +9,7 @@ package ToiChatProtocol;
 message ToiChatMessage {
     oneof messageType {
         DnsMessage dnsMessage = 1;
-        ServerMessage serverMessage = 2;
-        OneToOne oneToOneMessage = 3;
+        ChatMessage chatMessage = 2;
     }
 }
 
@@ -23,6 +22,6 @@ message DnsMessage {
     optional string description = 4 [default = "NONE"]; // Misc Info.
 }
 
-message OneToOne {
+message ChatMessage {
     required string id = 1;
 }

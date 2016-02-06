@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='ToiChatProtocol.proto',
   package='ToiChatProtocol',
-  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\xc1\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x37\n\rserverMessage\x18\x02 \x01(\x0b\x32\x1e.ToiChatProtocol.ServerMessageH\x00\x12\x34\n\x0foneToOneMessage\x18\x03 \x01(\x0b\x32\x19.ToiChatProtocol.OneToOneH\x00\x42\r\n\x0bmessageType\"a\n\nDnsMessage\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\x05\x12\x12\n\nlastUpdate\x18\x03 \x02(\x05\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"(\n\rServerMessage\x12\x17\n\toperation\x18\x01 \x02(\t:\x04None\"\x16\n\x08OneToOne\x12\n\n\x02id\x18\x01 \x02(\t')
+  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"a\n\nDnsMessage\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\x05\x12\x12\n\nlastUpdate\x18\x03 \x02(\x05\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"\x19\n\x0b\x43hatMessage\x12\n\n\x02id\x18\x01 \x02(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -40,15 +40,8 @@ _TOICHATMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='serverMessage', full_name='ToiChatProtocol.ToiChatMessage.serverMessage', index=1,
+      name='chatMessage', full_name='ToiChatProtocol.ToiChatMessage.chatMessage', index=1,
       number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='oneToOneMessage', full_name='ToiChatProtocol.ToiChatMessage.oneToOneMessage', index=2,
-      number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -68,7 +61,7 @@ _TOICHATMESSAGE = _descriptor.Descriptor(
       index=0, containing_type=None, fields=[]),
   ],
   serialized_start=43,
-  serialized_end=236,
+  serialized_end=178,
 )
 
 
@@ -118,50 +111,20 @@ _DNSMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=238,
-  serialized_end=335,
+  serialized_start=180,
+  serialized_end=277,
 )
 
 
-_SERVERMESSAGE = _descriptor.Descriptor(
-  name='ServerMessage',
-  full_name='ToiChatProtocol.ServerMessage',
+_CHATMESSAGE = _descriptor.Descriptor(
+  name='ChatMessage',
+  full_name='ToiChatProtocol.ChatMessage',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='operation', full_name='ToiChatProtocol.ServerMessage.operation', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=True, default_value=_b("None").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=337,
-  serialized_end=377,
-)
-
-
-_ONETOONE = _descriptor.Descriptor(
-  name='OneToOne',
-  full_name='ToiChatProtocol.OneToOne',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='id', full_name='ToiChatProtocol.OneToOne.id', index=0,
+      name='id', full_name='ToiChatProtocol.ChatMessage.id', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -178,26 +141,21 @@ _ONETOONE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=379,
-  serialized_end=401,
+  serialized_start=279,
+  serialized_end=304,
 )
 
 _TOICHATMESSAGE.fields_by_name['dnsMessage'].message_type = _DNSMESSAGE
-_TOICHATMESSAGE.fields_by_name['serverMessage'].message_type = _SERVERMESSAGE
-_TOICHATMESSAGE.fields_by_name['oneToOneMessage'].message_type = _ONETOONE
+_TOICHATMESSAGE.fields_by_name['chatMessage'].message_type = _CHATMESSAGE
 _TOICHATMESSAGE.oneofs_by_name['messageType'].fields.append(
   _TOICHATMESSAGE.fields_by_name['dnsMessage'])
 _TOICHATMESSAGE.fields_by_name['dnsMessage'].containing_oneof = _TOICHATMESSAGE.oneofs_by_name['messageType']
 _TOICHATMESSAGE.oneofs_by_name['messageType'].fields.append(
-  _TOICHATMESSAGE.fields_by_name['serverMessage'])
-_TOICHATMESSAGE.fields_by_name['serverMessage'].containing_oneof = _TOICHATMESSAGE.oneofs_by_name['messageType']
-_TOICHATMESSAGE.oneofs_by_name['messageType'].fields.append(
-  _TOICHATMESSAGE.fields_by_name['oneToOneMessage'])
-_TOICHATMESSAGE.fields_by_name['oneToOneMessage'].containing_oneof = _TOICHATMESSAGE.oneofs_by_name['messageType']
+  _TOICHATMESSAGE.fields_by_name['chatMessage'])
+_TOICHATMESSAGE.fields_by_name['chatMessage'].containing_oneof = _TOICHATMESSAGE.oneofs_by_name['messageType']
 DESCRIPTOR.message_types_by_name['ToiChatMessage'] = _TOICHATMESSAGE
 DESCRIPTOR.message_types_by_name['DnsMessage'] = _DNSMESSAGE
-DESCRIPTOR.message_types_by_name['ServerMessage'] = _SERVERMESSAGE
-DESCRIPTOR.message_types_by_name['OneToOne'] = _ONETOONE
+DESCRIPTOR.message_types_by_name['ChatMessage'] = _CHATMESSAGE
 
 ToiChatMessage = _reflection.GeneratedProtocolMessageType('ToiChatMessage', (_message.Message,), dict(
   DESCRIPTOR = _TOICHATMESSAGE,
@@ -213,19 +171,12 @@ DnsMessage = _reflection.GeneratedProtocolMessageType('DnsMessage', (_message.Me
   ))
 _sym_db.RegisterMessage(DnsMessage)
 
-ServerMessage = _reflection.GeneratedProtocolMessageType('ServerMessage', (_message.Message,), dict(
-  DESCRIPTOR = _SERVERMESSAGE,
+ChatMessage = _reflection.GeneratedProtocolMessageType('ChatMessage', (_message.Message,), dict(
+  DESCRIPTOR = _CHATMESSAGE,
   __module__ = 'ToiChatProtocol_pb2'
-  # @@protoc_insertion_point(class_scope:ToiChatProtocol.ServerMessage)
+  # @@protoc_insertion_point(class_scope:ToiChatProtocol.ChatMessage)
   ))
-_sym_db.RegisterMessage(ServerMessage)
-
-OneToOne = _reflection.GeneratedProtocolMessageType('OneToOne', (_message.Message,), dict(
-  DESCRIPTOR = _ONETOONE,
-  __module__ = 'ToiChatProtocol_pb2'
-  # @@protoc_insertion_point(class_scope:ToiChatProtocol.OneToOne)
-  ))
-_sym_db.RegisterMessage(OneToOne)
+_sym_db.RegisterMessage(ChatMessage)
 
 
 # @@protoc_insertion_point(module_scope)
