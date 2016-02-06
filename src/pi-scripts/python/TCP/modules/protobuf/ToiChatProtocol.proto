@@ -23,11 +23,6 @@ message DnsMessage {
     optional string description = 4 [default = "NONE"]; // Misc Info.
 }
 
-message ServerMessage {
-    required string operation = 1;
-    optional string description = 2 [default = ""];
-}
-
 message OneToOne {
     required string id = 1;
 }

@@ -28,8 +28,7 @@ class toiChatServer():
     #
     getType={
         0:ToiChatMessage.DnsMessage,
-        1:ToiChatMessage.ServerMessage,
-        2:ToiChatMessage.OneToOneMessage
+        1:ToiChatMessage.OneToOneMessage
     }
 
     # -- START CLASS CONSTRUCTOR -- 
@@ -38,15 +37,7 @@ class toiChatServer():
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xHostname, xDescription="", xPORT_TOICHAT=5005):
-        # Describe this toichatserver hostname/callsign
-        #
-        self.serverName = xHostname
-        
-        # Misc information about this toichatserver
-        #
-        self.description = xDescription
-
+    def __init__(self, xPORT_TOICHAT=5005):
         # Define port ToiChat uses to communicate
         #
         self.PORT_TOICHAT = xPORT_TOICHAT;
@@ -180,45 +171,6 @@ class toiChatServer():
 
         # -- START FUNCTION DESCR --
 
-    #
-    # Sends commands to a ToiChatServer instance to perform operations
-    # remotely. May raise an exception if toiChatServer can not be reached
-    #
-    # Inputs:
-    #   - whoSend = (Multiple Possibilities)
-    #       - A IPv4 Address which the function will lookup using the
-    #           internal DNS instance
-    #       - A already open socket which we will reply to. Assumed input
-    #           from __handleServerMessage__ function
-    #   - serverMsg = (Multiple Possibilities)
-    #       - A string input containing a server command
-    #       - A predefined ServerMessage. Assumed input from
-    #            __handleServerMessage__ function
-    # Outputs:
-    #   None
-    #
-    # -- END FUNCTION DESCR --
-    def createRemoteServerMessage(self, msgCMD):
-        # Create a New Server Message with the command seen from serverMsg
-        #
-        if msgCMD.lower() == ("stop" or "start" or "status"):
-            myServerMessage = ServerMessage()
-            # Create the server message with the appropriate command
-            #
-            if serverMsg == "stop":
-                reponseMessage.operation = "STOP"
-            elif serverMsg == "start":
-                reponseMessage.operation = "START"
-            else:
-                reponseMessage.operation = "STATUS"
-            
-            # The the message with the correct command
-            #
-            return serverMsg
-        else:
-            self.printServerUsage()
-            return -1
-
     # --------------------------------------------------------------------
     # ------------------- START OF PRIVATE FUNCTIONS ---------------------
     # --------------------------------------------------------------------
@@ -345,40 +297,36 @@ class toiChatServer():
                 # Check if MSG is null to determine whether we are 
                 # receiving or sending a message to client
                 #
-                if MSG == None:
-                    # Print that we have a new connection
-                    #
-                    clientIP = clientSock.getpeername()
+                # Print that we have a new connection
+                #
+                clientIP = clientSock.getpeername()
 
-                    print("'" + str(clientIP) + "'' - connected")
-                    # Receive the first four bytes containing the length    
-                    # of the message
-                    #
-                    raw_MSGLEN = self.__recvall__(clientSock, 4)
+                print("'" + str(clientIP) + "'' - connected")
+                # Receive the first four bytes containing the length    
+                # of the message
+                #
+                raw_MSGLEN = self.__recvall__(clientSock, 4)
 
-                    # Ensure the length of the message is not empty
-                    #
-                    if not raw_MSGLEN:
-                        clientSock.close()
-                        continue
+                # Ensure the length of the message is not empty
+                #
+                if not raw_MSGLEN:
+                    clientSock.close()
+                    continue
 
-                    # Get the length of the message from the data header
-                    #
-                    MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+                # Get the length of the message from the data header
+                #
+                MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
 
-                    # Output the message sent by the client to message parser 
-                    # thread. Also pass the type of message
-                    #
-                    rawBuffer = self.__recvall__(clientSock, MSGLEN)
+                # Output the message sent by the client to message parser 
+                # thread. Also pass the type of message
+                #
+                rawBuffer = self.__recvall__(clientSock, MSGLEN)
 
-                    # Process RAW MESSAGE
-                    #
-                    self.__messageProcess__(clientSock, rawBuffer)
-                else:
-                    # We are sending information back to the client
-                    #
-                    return self.__sendToiChatMessage__(clientSock, MSG)
+                # Process RAW MESSAGE
+                #
+                self.__messageProcess__(clientSock, rawBuffer)
 
+                return 1
             # Client closed connect so we close connection too. 
             #
             print("\t'" + str(clientIP) + "' - disconnected.")
@@ -415,111 +363,12 @@ class toiChatServer():
             decodeDnsMsg.ParseFromString(decodedToiMessage)
             handleDnsMessage(clientSock, decodeDnsMsg)
         elif msgType == self.getType[1]:
-            decodeServerMsg = ServerMessage()
-            decodeServerMsg.ParseFromString(decodedToiMessage)
-            self.__handleServerMessage__(clientSock, decodeServerMsg)
+            decodeOneMsg = OneToOne()
+            decodeOneMsg.ParseFromString(decodedToiMessage)
+            handleDnsMessage(clientSock, decodeOneMsg)
         else:
             print("Unknown MsgItem Type.")
-        return
-
-    # -- START FUNCTION DESCR --
-    #
-    # 
-    #
-    # Inputs:
-    #
-    # Outputs:
-    # 
-    #
-    # -- END FUNCTION DESCR --
-    def __handleServerMessage__(self, clientSock, serverMsg):
-        # Check Against possible known server messages
-        #
-        # Response type messages
-        #
-        if serverMsg.operation == ("SUCCESS" or "FAILED" or "UNKOWN") :
-            # Message type does not invoke a response so we close the
-            # socket to the client
-            #
-            clientSock.close()
-
-            # Print that connection to client closed
-            #
-            print(str(clientIP) + " - connected")
-            # Print Message sent by server
-            #
-            print(serverMsg.operation + serverMsg.msgDescription)
-            self.communicateQueue.put([clientSock, None])
-            return 1
-        # Command Type messages
-        #
-        elif serverMsg.operation == ("STOP" or "START" or "STATUS"):
-            # Capture output of server to variable
-            #
-            old_stdout = sys.stdout
-            old_stderr = sys.stderr
-            sys.stdout = mystdout = StringIO()
-            sys.stdout = mystderr = StringIO()
-
-            responseMsgDescription = ""
-            # Perform command
-            #
-            if serverMsg.operation == "STOP":
-                operationStatus = self.stopServer()
-            elif serverMsg.operation == "START":
-                operationStatus = self.startServer()
-            # If the remote server is asking for status return that we
-            # are alive and responding.
-            #
-            elif serverMsg.operation == "STATUS":
-                operationStatus = self.statusServer()
-            
-            # Create response server message
-            #
-            reponseMessage = ServerMessage()
-            reponseMessage.description = mystdout
-            reponseMessage.descriptionErr = mystderr
-
-            # Reset stdout and stderr back to console
-            #
-            sys.stdout = old_stdout
-            sys.sys.stderr = old_stderr
-
-            # Check if command was successful
-            #
-            if operationStatus == 1:
-                reponseMessage.operation = "SUCCESS"
-                self.communicateQueue.put([clientSock, reponseMessage])
-                return 1
-            else:
-                reponseMessage.operation = "FAILED"
-                self.communicateQueue.put([clientSock, reponseMessage])
-                return -1
-           #
-           # We do not close the clientSocket since we expect a response
-           #
-
-        # If could not recognize the response || command message type
-        # return UkNOWN to send server
-        #
-        else:
-            # Create response server message
-            #
-            reponseMessage = ServerMessage()
-            reponseMessage.operation = "UNKOWN"
-            reponseMessage.description = "The server" + \
-                "message command '" + serverMsg.operation +"' you " +\
-                "sent was not recognized"
-
-            # Tell the receiving client the command is not known
-            #
-            self.createRemoteServerMessage(clientSock, reponseMessage)
-
-            # Message type does not invoke a response so we close the
-            # socket to the client
-            #
-            clientSock.close()
-            return -1
+        return 1
 
     # -- START FUNCTION DESCR --
     #

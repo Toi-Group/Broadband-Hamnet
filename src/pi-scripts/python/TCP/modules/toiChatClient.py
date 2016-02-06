@@ -77,13 +77,17 @@ class toiChatserver():
         if list_IPS == None:
             return -1
 
+        # Create a DNS request information message
+        #
+        
+
         for toiServerIP in list_IPS:
             # Print to stdout what we are trying to connect to
             #
             print("Trying to connect to '" + toiServerIP + "'...")
-            serverMsg = self.mytoiChatServer.createRemoteServerMessage("status")
+            serverMSG = self.mytoiChatServer.createRemoteServerMessage("status")
             try:
-                self.__sendToiMessage__(toiServerIP, serverMsg, True)
+                self.sendMessage(toiServerIP, dnsMessage)
             except Exception as e:
                 if toiServerIP == list_IPS[len(list_IPS)-1]:
                     # We tried all IPs in the list and could not connect to 
@@ -101,12 +105,16 @@ class toiChatserver():
             # Did not fail to connect. Connection to server successful
             # Break out of for loop
             #
+            break
+        self.recieveMessage(toiServerIP)
+
 
             print("Connection to a server successful.")
             return 1
+
     # -- START FUNCTION DESCR -- 
     #
-    # Processes the message with server seen on socket passed
+    # Receives the message with server seen on socket passed
     #
     # Inputs:
     #  - communicateQueue = input is on the communicateQueue that  
@@ -116,53 +124,102 @@ class toiChatserver():
     #  - Either sends a message or receive a message that
     #
     # -- END FUNCTION DESCR -- 
-    def sendMessage(self, serverSock, MSG):       
-        # Check if socket is still open
+    def recieveMessage(self, serverSock, Response=False):       
+        # Print that we have a new connection
         #
-        if serverSock:
-            # Check if MSG is null to determine whether we are 
-            # receiving or sending a message to server
-            #
-            if MSG == None:
-                # Print that we have a new connection
-                #
-                serverIP = serverSock.getpeername()
+        serverIP = serverSock.getpeername()
 
-                print("Connected to - '" + str(serverIP) + "'")
-                # Receive the first four bytes containing the length    
-                # of the message
-                #
-                raw_MSGLEN = self.__recvall__(serverSock, 4)
+        print("Connected to - '" + str(serverIP) + "'")
+        # Receive the first four bytes containing the length    
+        # of the message
+        #
+        raw_rawMSGLEN = self.__recvall__(serverSock, 4)
 
-                # Ensure the length of the message is not empty
-                #
-                if not raw_MSGLEN:
-                    serverSock.close()
-                    continue
+        # Ensure the length of the message is not empty
+        #
+        if not raw_rawMSGLEN:
+            serverSock.close()
+            continue
 
-                # Get the length of the message from the data header
-                #
-                MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+        # Get the length of the message from the data header
+        #
+        rawMSGLEN = struct.unpack('>I', raw_rawMSGLEN)[0]
 
-                # Output the message sent by the server to message parser 
-                # thread. Also pass the type of message
-                #
-                rawBuffer = self.__recvall__(serverSock, MSGLEN)
+        # Output the message sent by the server to message parser 
+        # thread. Also pass the type of message
+        #
+        rawBuffer = self.__recvall__(serverSock, rawMSGLEN)
 
-                # Process RAW MESSAGE
-                #
-                self.__messageProcess__(serverSock, rawBuffer)
-                return 1
-            else:
-                # We are sending information back to the server
-                #
-                return self.__sendToiMessage__(serverSock, MSG)
+        # Process RAW MESSAGE
+        #
+        return self.__messageProcess__(serverSock, rawBuffer)
 
         # server closed connect so we close connection too. 
         #
         print("\tDisconnected from - '" + str(serverIP) + "'")
         serverSock.close()
         return 1
+    
+    # -- START FUNCTION DESCR --
+    #
+    # Sends a ToiChatMessage over a to a ToiChatSeve. This function will 
+    # append the length of the message to the beginning to 
+    # ensure the full message is sent. 
+    #
+    # Inputs:
+    #  - toiServerIP = ToiChat server you wish to connect to
+    #  - rawrawMSG = message type as defined by ToiChatMessage Protocol
+    #  - outPut = Whether the message you are sending expects an output
+    #
+    # Outputs:
+    #   - Returns true if message was sent successfully. 
+    #
+    # -- END FUNCTION DESCR -- 
+    def sendMessage(self, toiServerIP, rawrawMSG, Response=False):
+        # Else do a DNS lookup
+        #
+        #toiServerIP = dnsGetIP(toiServerHostnameorIP)
+
+        # Create a new socket to the server
+        #
+        serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Set socket serverSockection timeout. If server doesn't respond
+        # if five seconds say the server can not be contacted. 
+        #
+        serverSock.settimeout(5.0) 
+
+        # Try to connect to passed IP
+        #
+        serverSock.connect((toiServerIP, toiServerPORT))
+
+        # Create a new ToiChatMessage object
+        #
+        decodedToiMessage = ToiChatMessage()
+
+        # Input the message into the ToiChatMessage
+        #
+        decodedToiMessage.rawMSGType = rawrawMSG
+
+        # Convert ToiChatMessage to binary stream.
+        # 
+        encodedToiMessage = decodedToiMessage.SerializeToString()
+        
+        # Append the length of the message to the beginning
+        #
+        encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
+            encodedToiMessage
+
+        # Send message over socket
+        #
+        self.sendMessage(serverSock, encodedToiMessage)
+
+        # Check if the sent message expects a response
+        #
+        Response
+
+        return 1
+
 
     # --------------------------------------------------------------------
     # ------------------- START OF PRIVATE FUNCTIONS ---------------------
@@ -190,97 +247,35 @@ class toiChatserver():
         
         # Find the type of message sent
         #
-        msgType = decodedToiMessage.WhichOneOf("messageType")
+        rawMSGType = decodedToiMessage.WhichOneOf("messageType")
 
-        if msgType == self.getType[0]:
-            decodeDnsMsg = DnsMessage()
-            decodeDnsMsg.ParseFromString(decodedToiMessage)
-            handleDnsMessage(serverSock, decodeDnsMsg)
-        elif msgType == self.getType[1]:
-            decodeServerMsg = ServerMessage()
-            decodeServerMsg.ParseFromString(decodedToiMessage)
-            self.__handleServerMessage__(serverSock, decodeServerMsg)
+        if rawMSGType == self.getType[0]:
+            decodeDnsrawMSG = DnsMessage()
+            decodeDnsrawMSG.ParseFromString(decodedToiMessage)
+            handleDnsMessage(serverSock, decodeDnsrawMSG)
+        elif rawMSGType == self.getType[1]:
+            decodeserverMSG = ServerMessage()
+            decodeserverMSG.ParseFromString(decodedToiMessage)
+            self.__handleServerMessage__(serverSock, decodeserverMSG)
         else:
-            print("Unknown MsgItem Type.")
-        return
-
-        # -- START FUNCTION DESCR --
-    #
-    # Sends a ToiChatMessage over a to a ToiChatSeve. This function will 
-    # append the length of the message to the beginning to 
-    # ensure the full message is sent. 
-    #
-    # Inputs:
-    #  - toiServerIP = ToiChat server you wish to connect to
-    #  - rawMsg = message type as defined by ToiChatMessage Protocol
-    #  - outPut = Whether the message you are sending expects an output
-    #
-    # Outputs:
-    #   - Returns true if message was sent successfully. 
-    #
-    # -- END FUNCTION DESCR -- 
-    def __sendToiMessage__(self, toiServerIP, rawMsg, outPut):
-        # Else do a DNS lookup
-        #
-        #toiServerIP = dnsGetIP(toiServerHostnameorIP)
-
-        # Create a new socket to the server
-        #
-        serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # Set socket serverSockection timeout. If server doesn't respond
-        # if five seconds say the server can not be contacted. 
-        #
-        serverSock.settimeout(5.0) 
-
-        # Try to connect to passed IP
-        #
-        serverSock.connect((toiServerIP, toiServerPORT))
-
-        # Create a new ToiChatMessage object
-        #
-        decodedToiMessage = ToiChatMessage()
-
-        # Input the message into the ToiChatMessage
-        #
-        decodedToiMessage.msgType = rawMsg
-
-        # Convert ToiChatMessage to binary stream.
-        # 
-        encodedToiMessage = decodedToiMessage.SerializeToString()
-        
-        # Append the length of the message to the beginning
-        #
-        encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
-            encodedToiMessage
-
-        # Send message over socket
-        #
-        self.sendMessage(serverSock, encodedToiMessage)
-
-        if outPut = True:
-            # If we expect an output we wait for server response
-            #
-            self.__messageProcess__(serverSock, encodedToiMessage)
+            print("Unknown rawMSGItem Type.")
+            return -1
         return 1
-
-
-
 
     # -- START FUNCTION DESCR -- 
     #
-    # From socket received message up to MSGLEN. 
+    # From socket received message up to rawMSGLEN. 
     #
     # Inputs:
     #  - serverSock = socket serverSockected a server machine
-    #  - MSGLEN = received the message on the socket up to this length.
+    #  - rawMSGLEN = received the message on the socket up to this length.
     #
     # Outputs:
     #  - data_packet = outputs message in binary format.
     #
     #
     # -- END FUNCTION DESCR -- 
-    def __recvall__(self, serverSock, MSGLEN):
+    def __recvall__(self, serverSock, rawMSGLEN):
         # Get the server's IP
         #
         serverIP = serverSock.getpeername()
@@ -291,10 +286,10 @@ class toiChatserver():
         
         # While the server is still sending a message
         #
-        while len(data) < MSGLEN:
+        while len(data) < rawMSGLEN:
             # Keep reading message from server
             #
-            data_packet = serverSock.recv(MSGLEN - len(data))
+            data_packet = serverSock.recv(rawMSGLEN - len(data))
             if not data_packet:
                 print("\tConnection to '" + \
                     str(serverIP) + "' lost.")
