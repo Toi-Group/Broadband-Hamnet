@@ -8,15 +8,16 @@
 # Author: Toi-Group
 #
 
-import protobuf.ToiChatProtocol_pb2
+from modules.protobuf import ToiChatProtocol_pb2
 import socket
 import struct, sys
-import conn_router
-import gatewayIP
+from modules.conn_router import conn_router
+from modules.gatewayIP import gatewayIP
 import time
+
 # import DNSInstance
 
-class toiChatserver():
+class toiChatClient():
     # -- START CLASS CONSTRUCTOR -- 
     #
     # ToiChat class handling client side communication
@@ -30,11 +31,6 @@ class toiChatserver():
         # Misc information about this toichat client
         #
         self.clientDescription = xclientDescription
-
-        # Create a toiChatServer instance which we use to create messages
-        #
-        self.mytoiChatServer = toiChatServer(self.clientName, \
-            self.clientDescription)
 
         # Create dns object instance
         #
@@ -65,11 +61,42 @@ class toiChatserver():
         # Create a request DNS information request message
         #
         #requestDNS = self.DnsInstance.requestDNSinfomation()
-        requestDNS = DnsMessage()
-        requestDNS.clientName = self.clientName
-        requestDNS.clientId = socket.gethostbyname(socket.gethostname())
-        requestDNS.lastUpdate = time.strftime("%Y%m%d - %H:%M:%S")
-        requestDNS.description = self.clientDescription
+        requestDNS = ToiChatProtocol_pb2.ToiChatMessage()
+        requestDNS.dnsMessage.command = 0
+        requestDNS.dnsMessage.clientName = self.clientName
+        requestDNS.dnsMessage.clientId = socket.gethostbyname(socket.gethostname())
+        requestDNS.dnsMessage.lastUpdate = time.strftime("%Y%m%d - %H:%M:%S")
+        requestDNS.dnsMessage.description = "Lorem Ipsum is simply dummy" + \
+        "text of the printing and typesetting industry. Lorem Ipsum has " + \
+        "been the industry's standard dummy text ever since the 1500s, " + \
+        "when an unknown printer took a galley of type and scrambled it " +\
+        "to make a type specimen book. It has survived not only five " + \
+        "centuries, but also the leap into electronic typesetting, " + \
+        "remaining essentially unchanged. It was popularised in the 1960s " + \
+        "with the release of Letraset sheets containing Lorem Ipsum " + \
+        "passages, and more recently with desktop publishing software " + \
+        "like Aldus PageMaker including versions of Lorem Ipsum.It is a " + \
+        "long established fact that a reader will be distracted by the " + \
+        "readable content of a page when looking at its layout. The point " + \
+        "of using Lorem Ipsum is that it has a more-or-less normal distribution" + \
+        " of letters, as opposed to using 'Content here, content here', " + \
+        "making it look like readable English. Many desktop publishing " + \
+        "packages and web page editors now use Lorem Ipsum as their default " + \
+        "model text, and a search for 'lorem ipsum' will uncover many web sites " + \
+        "still in their infancy. Various versions have evolved over the " + \
+        "years, sometimes by accident, sometimes on purpose (injected " + \
+        "humour and the like).Contrary to popular belief, Lorem Ipsum is " + \
+        "not simply random text. It has roots in a piece of classical " + \
+        "Latin literature from 45 BC, making it over 2000 years old. "
+
+        requestDNSTest = ToiChatProtocol_pb2.DnsMessage.DNSClients()
+        
+        for x in range(0, 100):
+            requestDNSTest = requestDNS.dnsMessage.nums.add()
+            requestDNSTest.clientName = requestDNS.dnsMessage.clientName
+            requestDNSTest.clientId  = requestDNS.dnsMessage.clientId 
+            requestDNSTest.lastUpdate = requestDNS.dnsMessage.lastUpdate
+            requestDNSTest.description = requestDNS.dnsMessage.description
 
         for toiServerIP in list_IPS:
             # Print to stdout what we are trying to connect to
@@ -122,7 +149,8 @@ class toiChatserver():
     #   - Returns true if message was sent successfully. 
     #
     # -- END FUNCTION DESCR -- 
-    def sendMessage(self, toiServerIP, rawrawMSG, toiServerPORT=5005):
+    def sendMessage(self, toiServerIP, decodedToiMessage, \
+        toiServerPORT=5005):
         # Else do a DNS lookup
         #
         #toiServerIP = dnsGetIP(toiServerHostnameorIP)
@@ -140,18 +168,10 @@ class toiChatserver():
         #
         serverSock.connect((toiServerIP, toiServerPORT))
 
-        # Create a new ToiChatMessage object
-        #
-        decodedToiMessage = ToiChatMessage()
-
-        # Input the message into the ToiChatMessage
-        #
-        decodedToiMessage.messageType = rawrawMSG
-
         # Convert ToiChatMessage to binary stream.
         # 
         encodedToiMessage = decodedToiMessage.SerializeToString()
-        
+        print("len of message = " + str(len(encodedToiMessage)))
         # Append the length of the message to the beginning
         #
         encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
@@ -159,7 +179,7 @@ class toiChatserver():
 
         # Send message over socket
         #
-        self.sendMessage(serverSock, encodedToiMessage)
+        serverSock.sendall(encodedToiMessage)
 
         # Close socket to server
         #

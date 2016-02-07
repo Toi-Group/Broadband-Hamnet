@@ -9,7 +9,7 @@
 # Author: Toi-Group
 #
 
-import protobuf.ToiChatProtocol_pb2
+from modules.protobuf import ToiChatProtocol_pb2
 import socket
 from threading import Thread
 import queue
@@ -26,10 +26,9 @@ class toiChatServer():
     # Types of messages to expect
     #
     getType={
-        0:ToiChatMessage.DnsMessage,
-        1:ToiChatMessage.ChatMessage
+        0:"dnsMessage",
+        1:"chatMessage"
     }
-
     # -- START CLASS CONSTRUCTOR -- 
     #
     # ToiChat class handling server side communication 
@@ -43,11 +42,15 @@ class toiChatServer():
 
         # Server is by default set to disabled
         #
-        self.stopServer = False
+        self.stopServerVar = False
 
         # Create a communication handler thread queue
         #
         self.communicateQueue = queue.Queue()
+
+        # Create a print to file queue
+        #
+        self.printQueue = queue.Queue()
 
         # Start the client recv connection handler thread
         #
@@ -58,6 +61,12 @@ class toiChatServer():
         self.C = Thread(target=self.__communicate__)
         self.C.daemon = True
 
+        # Print server output to file thread
+        #
+        self.W = Thread(target=self.__printToFile__)
+        self.W.daemon = True
+        self.W.start()
+
     
     # -- START CLASS DESTRUCTOR -- 
     #
@@ -66,6 +75,7 @@ class toiChatServer():
     # -- END CLASS DESTRUCTOR -- 
     def __del__(self):
         self.stopServer()
+        self.printQueue.put(self.CONST_EXIT_THREAD)
     
     # -- START FUNCTION DESCR --
     #
@@ -80,37 +90,47 @@ class toiChatServer():
     #
     # -- END FUNCTION DESCR -- 
     def startServer(self):
-        print("Attempting to start ToiChat server...")
+        # Check to see if printer thread has already started
+        #
+        if (self.W.is_alive() == False):
+            try:
+                self.W.start()
+            except RuntimeError as e:
+                raise Exception("ERROR: ToiChat server printer thread " + \
+                    "failed to start!")
+                return 0
+
+        self.printQueue.put("Attempting to start ToiChat server...")
 
         # Check to see if server listener thread has already started
         #
         if (self.S.is_alive() == False):
-            self.stopServer = False
+            self.stopServerVar = False
             # Attempt to start the server listener
             #
             try:
                 self.S.start()
             except RuntimeError as e:
-                print("\tAttempt to start server failed.\n\n")
+                self.printQueue.put("\tAttempt to start server failed.\n\n")
                 return 0
         # Check to see if message processor thread has already started
         #
-        elif (self.C.is_alive() == False):
+        if (self.C.is_alive() == False):
             try:
                 # Attempt to start the message processor thread
                 #
                 self.C.start()
             except RuntimeError as e:
-                print("\tAttempt to start server failed.\n\n")
+                self.printQueue.put("\tAttempt to start server failed.\n\n")
                 return 0
         # Both server dependencies are already started
         #
         else:
-            print("\tServer already started.\n\n")
+            self.printQueue.put("\tServer already started.\n\n")
             return 1
         # Server dependencies started successfully.
         #
-        print("\tAttempt to start server was successful!\n\n")
+        self.printQueue.put("\tAttempt to start server was successful!\n\n")
         return 1
 
     # -- START FUNCTION DESCR --
@@ -127,28 +147,30 @@ class toiChatServer():
     def stopServer(self):
         # If break out of loop print we are closing the server
         #
-        print("Attempting to stop ToiChat server...")
+        self.printQueue.put("Attempting to stop ToiChat server...")
 
         # Tell the server listener thread to break accepting connections
         #
-        self.stopServer = True
+        self.stopServerVar = True
 
         # Stop the communicateQueue thread handler 
         # 
-        self.communicateQueue.put(self.CONST_EXIT_THREAD)
-
+        self.communicateQueue.put([None, self.CONST_EXIT_QUEUE])
+        
         # Wait for both server threads to close
         #
-        self.S.join(3.0)
-        self.C.join(3.0)
+        if (self.S.is_alive() == True):
+            self.S.join(3.0)
+        if (self.C.is_alive() == True):
+            self.C.join(3.0)
 
         # Determine if server listener thread stopped correctly
         #
         if (self.S.is_alive() or self.C.is_alive()) == True:
-            print("\tAttempt to stop server failed.\n\n")
+            self.printQueue.put("\tAttempt to stop server failed.\n\n")
             return 0
         else:
-            print("\tAttempt to stop server was successful!\n\n")
+            self.printQueue.put("\tAttempt to stop server was successful!\n\n")
         return 1
 
     # -- START FUNCTION DESCR --
@@ -167,8 +189,6 @@ class toiChatServer():
             return 1
         else:
             return 0
-
-        # -- START FUNCTION DESCR --
 
     # --------------------------------------------------------------------
     # ------------------- START OF PRIVATE FUNCTIONS ---------------------
@@ -206,7 +226,7 @@ class toiChatServer():
             # Set socket serverSocket timeout to check if we should stop
             # running the server every 2 seconds.
             #
-            serverSock.settimeout(2) 
+            #serverSock.settimeout(2) 
 
             while True:
                 # Accept incoming client connections
@@ -215,15 +235,14 @@ class toiChatServer():
 
                 # Check if we have a valid socket connection to a client
                 #
-                if clientSock:
-                    # When a clientSockection is found put it into the 
-                    # processing message queue.
-                    #
-                    self.communicateQueue.put([clientSock, None])
+                # When a clientSockection is found put it into the 
+                # processing message queue.
+                #
+                self.communicateQueue.put([clientSock, addr])
                 
                 # Check if we should stop listening 
                 #
-                if self.stopServer == True:
+                if self.stopServerVar == True:
                     break
         return 1
 
@@ -240,11 +259,7 @@ class toiChatServer():
     #
     #
     # -- END FUNCTION DESCR -- 
-    def __recvall__(self, clientSock, MSGLEN):
-        # Get the client's IP
-        #
-        clientIP = clientSock.getpeername()
-
+    def __recvall__(self, clientSock, addr, MSGLEN):
         # Initiate an array with the message being sent by client
         #
         data = b''
@@ -256,14 +271,14 @@ class toiChatServer():
             #
             data_packet = clientSock.recv(MSGLEN - len(data))
             if not data_packet:
-                print("\tConnection to '" + \
-                    str(clientIP) + "' lost.")
-                return None
+                self.printQueue.put("\tConnection to '" + \
+                    str(addr) + "' lost.")
+                return 0
 
             # Append the data to the overall message
             #
             data += data_packet
-        return data_packet
+        return data
 
 
     # -- START FUNCTION DESCR -- 
@@ -283,91 +298,119 @@ class toiChatServer():
             # Get a client socket clientSockection from server listen 
             # thread
             #
-            [clientSock, MSG] = self.communicateQueue.get()
-
+            [clientSock, addr] = self.communicateQueue.get()
             # Get if queueEXIT STATUS is true. Stop thread if true.
             #
-            if MSG == self.CONST_EXIT_QUEUE:
+            if addr == self.CONST_EXIT_QUEUE:
+                self.communicateQueue.task_done()
                 break
-            
             # Check if socket is still open
             #
-            if clientSock:
-                # Check if MSG is null to determine whether we are 
-                # receiving or sending a message to client
-                #
-                # Print that we have a new connection
-                #
-                clientIP = clientSock.getpeername()
+            # Check if MSG is null to determine whether we are 
+            # receiving or sending a message to client
+            #
+            self.printQueue.put("\t'" + str(addr) + "' - connected")
+            
+            # Receive the first four bytes containing the length    
+            # of the message
+            #
+            raw_MSGLEN = self.__recvall__(clientSock, addr, 4)
 
-                print("'" + str(clientIP) + "'' - connected")
-                # Receive the first four bytes containing the length    
-                # of the message
-                #
-                raw_MSGLEN = self.__recvall__(clientSock, 4)
+            # Ensure the length of the message is not empty
+            #
+            if not raw_MSGLEN:
+                clientSock.close()
+                continue
+            # Get the length of the message from the data header
+            #
+            MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+            self.printQueue.put("expected len message = " + str(MSGLEN))
+            
+            # Output the message sent by the client to message parser 
+            # thread. Also pass the type of message
+            #
+            rawBuffer = self.__recvall__(clientSock, addr, MSGLEN)
+            self.printQueue.put("actual len message =" + str(len(rawBuffer)))
 
-                # Ensure the length of the message is not empty
-                #
-                if not raw_MSGLEN:
-                    clientSock.close()
-                    continue
+            # Process RAW MESSAGE
+            #
+            self.__messageProcess__(clientSock, rawBuffer)
 
-                # Get the length of the message from the data header
-                #
-                MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
-
-                # Output the message sent by the client to message parser 
-                # thread. Also pass the type of message
-                #
-                rawBuffer = self.__recvall__(clientSock, MSGLEN)
-
-                # Process RAW MESSAGE
-                #
-                self.__messageProcess__(clientSock, rawBuffer)
-
-                return 1
             # Client closed connect so we close connection too. 
             #
-            print("\t'" + str(clientIP) + "' - disconnected.")
+            self.printQueue.put("\t'" + str(addr) + "' - disconnected.")
             clientSock.close()
+
+            # Indicate we finished processing the enqueued socket
+            #
+            self.communicateQueue.task_done()
         return 1
 
-    # -- START __FUNCTION DESCR --
+    # -- START FUNCTION DESCR --
     #
     # Decodes message based on its type
     #
     # Inputs:
-    #   clientSocket = 
-    #   rawBuffer = 
+    #   clientSocket = A live connection to a client sending a message
+    #   rawBuffer = A message of type ToiChatProtocol received from client
     #
     # Outputs:
-    # 
+    #   - Hands off message to appropriate handler. 
     #
     # -- END FUNCTION DESCR --
     def __messageProcess__(self, clientSock, rawBuffer):
         # Create a ToiChat Message Type 
         #
-        decodedToiMessage = ToiChatMessage()
+        decodedToiMessage = ToiChatProtocol_pb2.ToiChatMessage()
 
+        self.printQueue.put(rawBuffer)
         # Decode the raw message 
         #
         decodedToiMessage.ParseFromString(rawBuffer)
-        
+
         # Find the type of message sent
         #
-        msgType = decodedToiMessage.WhichOneOf("messageType")
-
+        msgType = decodedToiMessage.WhichOneof("messageType")
         if msgType == self.getType[0]:
-            decodeDnsMsg = DnsMessage()
-            decodeDnsMsg.ParseFromString(decodedToiMessage)
-            print(decodeDnsMsg)
+            decodeDnsMsg = ToiChatProtocol_pb2.DnsMessage()
+            decodeDnsMsg = decodedToiMessage
+            self.printQueue.put(decodeDnsMsg)
             #handleDnsMessage(decodeDnsMsg)
         elif msgType == self.getType[1]:
-            decodeChatMsg = ChatMessage()
-            decodeChatMsg.ParseFromString(decodedToiMessage)
+            decodeChatMsg = ToiChatProtocol_pb2.ChatMessage()
+            decodeDnsMsg = decodedToiMessage
             #handleChatMessage(decodeChatMsg)
         else:
-            print("Unknown MsgItem Type.")
-        clientSock.close()
+            self.printQueue.put("Unknown MsgItem Type. '" + msgType + "'")
         return 1
 
+    # -- START __FUNCTION DESCR --
+    #
+    # Processes print statement for server function and prints them
+    # to a file. 
+    #
+    # Inputs:
+    #   - A string seen on printQueue
+    #
+    # Outputs:
+    #  - Prints to file 
+    #
+    # -- END FUNCTION DESCR --
+    def __printToFile__(self):
+        while True:
+            # Get an item to print
+            #
+            text = self.printQueue.get()
+
+            if text == self.CONST_EXIT_QUEUE:
+                self.printQueue.task_done()
+                break
+            # Redirect print output to file
+            #
+            serverOut = open('toiChatServer.log', 'a')
+            serverOut.write(str(text) + "\n")
+            serverOut.close()
+            # Indicate we finished processing the enqueued item to print
+            #
+            self.printQueue.task_done()
+        return 0
