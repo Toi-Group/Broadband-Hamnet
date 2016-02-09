@@ -157,7 +157,7 @@ class toiChatClient():
 
         # After connection to a toiChatServer setup the local
         # router to listen for new router arp requests
-        txARPinfo()
+        #txArpInfo()
 
         print("Connection to a toiChatNetwork successful.")
         return 1
