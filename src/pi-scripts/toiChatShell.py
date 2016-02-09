@@ -29,7 +29,7 @@ class toiChatShell(cmd.Cmd):
         if self.askYesNo("Do you want to search for server " +\
                 "on a non-standard port?"):
             self.myToiChatClient.attemptFindServer(askForValidPort())
-        self.myToiChatServer.startServer()
+        self.myToiChatClient.attemptFindServer()
 
     def do_stopserver(self, arg):
         'Stop the toiChat Server'
