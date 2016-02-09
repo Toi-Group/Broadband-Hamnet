@@ -1,24 +1,28 @@
 
 #!/usr/bin/env python3
 
+import os # Used for testing the location to the router script is valid
+import socket # Used for testing IP validity.
+import subprocess # Used for running shell commands
+
+# -- START FUNCTION DESCR --
+#
 # This program establishes a connection to a broadband-hamnet
 # router and runs '../router-scripts/router_request_arpinf.sh'.
-
+#
 # Inputs:
 #  - default_gateway = the default gateway address which the mesh can be 
 #       found
-
+#
 # Outputs:
 #  - IPs = returns the IPv4 addresses of nodes found on the mesh network in a list.
-
-# Import Modules
-import os, sys, socket
-import subprocess
-
+#
+# -- END FUNCTION DESCR -- 
 def conn_router(default_gateway):
     # Directory with router scripts
     #
-    scriptPath = 'router_request_arpinfo.sh'			
+    scriptPath = 'router_request_arpinfo.sh'
+
     # Try to open 'router_request_arpinf.sh'
     #
     #if (os.path.isfile(scriptPath) == False):
@@ -60,9 +64,6 @@ def conn_router(default_gateway):
         #
         if valid_IPs == []:
             return None
-        print("Success in ARP request. Found IPs:\n\t" + \
-            str(valid_IPs) + "\n\n") 
-
     
     #Return a list of IPs found on the mesh network
     #

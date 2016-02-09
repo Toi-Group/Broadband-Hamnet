@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Define port toi-chat uses to communicate between routers
 #
@@ -9,7 +9,6 @@ while [ 1 ]
 do
     # Start listening to traffic over network specifically port 5010
     #
-
     rx_mess="$(nc -lp $toiPort)"
     
     # Debug print send message

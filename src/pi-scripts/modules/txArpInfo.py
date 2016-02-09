@@ -2,7 +2,7 @@ from threading import Thread
 from modules.gatewayIP import gatewayIP
 from modules.listen_router import listen_router
 
-def txARPinfo():
+def txArpInfo():
 
     # Find the gateway IP 
     # 
@@ -12,4 +12,4 @@ def txARPinfo():
     TXarp = Thread(target=listen_router, args=(gateway))
     TXarp.daemon = True
     TXarp.start()
-    
+    return 1
