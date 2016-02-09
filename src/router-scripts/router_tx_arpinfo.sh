@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Define port toi-chat uses to communicate between routers
 #

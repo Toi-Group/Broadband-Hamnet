@@ -19,6 +19,8 @@ from modules.conn_router import conn_router # Used for sending a request
 from modules.gatewayIP import gatewayIP # Used for finding the address
                                         # of the local broadband hamnet
                                         # router
+from modules.txArpInfo import txArpInfo # Used for instructing the router to listen for 
+                                        # incoming requests.
 
 # toiChatClient sends messages to a toiChatServer in network
 #
@@ -152,6 +154,10 @@ class toiChatClient():
             # Break out of for loop
             #
             break
+
+        # After connection to a toiChatServer setup the local
+        # router to listen for new router arp requests
+        txARPinfo()
 
         print("Connection to a toiChatNetwork successful.")
         return 1
