@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-import subprocess
-
+import subprocess # Used for running shell commands
 
 # -- START FUNCTION DESCR --
 #
 # Example Usage:
 #   - routerIP = gatewayIP()
-# Get IP of default gateway 
+#
+# Get IP of default gateway
+#
 # Inputs:
 #   None
 # Outputs:
@@ -15,7 +16,6 @@ import subprocess
 #
 # -- END FUNCTION DESCR -- 
 def gatewayIP():
-
     cmd = "route -n | grep 'UG'"
     route = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     routerIP = route.communicate()[0]

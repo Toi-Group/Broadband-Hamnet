@@ -9,13 +9,18 @@
 # Author: Toi-Group
 #
 
-from modules.protobuf import ToiChatProtocol_pb2
-import socket
-from threading import Thread
-import queue
-import struct, sys
+from modules.protobuf import ToiChatProtocol_pb2 # Used for decoding 
+                                                 # and finding message type
+                                                 # of a ToiChatMessage
+import socket # Used for receiving information from a toiChatClient
+from threading import Thread # Used for separating listener with server 
+                            # full message receiver. 
+import queue # Used for communication between server listener, receiver, 
+             # and printer
+import struct, sys # Used for finding the full message length of a received
+                   # message.
 
-# ToiChat Server listener
+# ToiChatServer listener and ToiChatMessage handler
 #
 class toiChatServer():
 
@@ -23,19 +28,29 @@ class toiChatServer():
     #
     CONST_EXIT_QUEUE = "EXITTHREAD"
 
-    # Types of messages to expect
+    # Types of messages to expect as defined in ToiChatProtocol
     #
     getType={
         0:"dnsMessage",
         1:"chatMessage"
     }
+
     # -- START CLASS CONSTRUCTOR -- 
     #
     # ToiChat class handling server side communication 
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xPORT_TOICHAT=5005):
+    def __init__(self, xtoiChatNameServer, xPORT_TOICHAT=5005, \
+        xlogFileName = 'toiChatServer.log'):
+        # Filename where should we save server logs to
+        #
+        self.logFileName = xlogFileName
+
+        # Store ToiChatNameServer to use
+        #
+        self.myToiChatNameServer = xtoiChatNameServer
+
         # Define port ToiChat uses to communicate
         #
         self.PORT_TOICHAT = xPORT_TOICHAT;
@@ -54,7 +69,7 @@ class toiChatServer():
 
         # Start the client recv connection handler thread
         #
-        self.S = Thread(target=self.__pi_server_toichat__)
+        self.S = Thread(target=self.__toiChatListener__)
 
         # Start the communication handler thread
         #
@@ -206,7 +221,7 @@ class toiChatServer():
     #
     #
     # -- END FUNCTION DESCR -- 
-    def __pi_server_toichat__(self):
+    def __toiChatListener__(self):
         # Create a tuple with listening on localhost and PORT_TOICHAT
         #
         SERVER = ('', self.PORT_TOICHAT)
@@ -248,15 +263,82 @@ class toiChatServer():
 
     # -- START FUNCTION DESCR -- 
     #
-    # From socket received message up to MSGLEN. 
+    # Processes the message with toiChatClient seen on socket passed
     #
     # Inputs:
-    #  - clientSock = socket clientSockected a client machine
+    #  - communicateQueue = input is on the communicateQueue that  
+    #       messages are put on to either send or receive.
+    #
+    # Outputs:
+    #  - Either sends a message or receive a message that
+    #
+    # -- END FUNCTION DESCR -- 
+    def __communicate__(self):
+        while True:
+            # Get a client socket clientSockection from server listen 
+            # thread
+            #
+            [clientSock, addr] = self.communicateQueue.get()
+
+            # Get if queueEXIT STATUS is true. Stop thread if true.
+            #
+            if addr == self.CONST_EXIT_QUEUE:
+                self.communicateQueue.task_done()
+                break
+
+            # Check if socket is still open?
+            #
+
+            # Print to log we are receiving a message
+            #
+            self.printQueue.put("'" + str(addr) + "' - connected\n")
+            
+            # Receive the first four bytes containing the length    
+            # of the message
+            #
+            raw_MSGLEN = self.__recvall__(clientSock, addr, 4)
+
+            # Ensure the length of the message is not empty
+            #
+            if not raw_MSGLEN:
+                clientSock.close()
+                continue
+
+            # Get the length of the message from the data header
+            #
+            MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+            self.printQueue.put("expected len message = " + str(MSGLEN))
+            
+            # Continue receiving the full message expected from client
+            #
+            rawBuffer = self.__recvall__(clientSock, addr, MSGLEN)
+            self.printQueue.put("actual len message = " + \
+                str(len(rawBuffer)))
+
+            # Process RAW MESSAGE
+            #
+            self.__messageProcess__(clientSock, rawBuffer)
+
+            # Close socket to client. 
+            #
+            self.printQueue.put("\n'" + str(addr) + "' - disconnected.\n\n")
+            clientSock.close()
+
+            # Indicate we finished processing the enqueued socket
+            #
+            self.communicateQueue.task_done()
+        return 1
+
+    # -- START FUNCTION DESCR -- 
+    #
+    # From socket passed, receive the message sent by a client up to MSGLEN
+    #
+    # Inputs:
+    #  - clientSock = socket to a toiChatClient
     #  - MSGLEN = received the message on the socket up to this length.
     #
     # Outputs:
     #  - data_packet = outputs message in binary format.
-    #
     #
     # -- END FUNCTION DESCR -- 
     def __recvall__(self, clientSock, addr, MSGLEN):
@@ -278,81 +360,18 @@ class toiChatServer():
             # Append the data to the overall message
             #
             data += data_packet
+        # Return the full message received
+        #
         return data
-
-
-    # -- START FUNCTION DESCR -- 
-    #
-    # Processes the message with client seen on socket passed
-    #
-    # Inputs:
-    #  - communicateQueue = input is on the communicateQueue that  
-    #       messages are put on to either send or receive.
-    #
-    # Outputs:
-    #  - Either sends a message or receive a message that
-    #
-    # -- END FUNCTION DESCR -- 
-    def __communicate__(self):
-        while True:
-            # Get a client socket clientSockection from server listen 
-            # thread
-            #
-            [clientSock, addr] = self.communicateQueue.get()
-            # Get if queueEXIT STATUS is true. Stop thread if true.
-            #
-            if addr == self.CONST_EXIT_QUEUE:
-                self.communicateQueue.task_done()
-                break
-            # Check if socket is still open
-            #
-            # Check if MSG is null to determine whether we are 
-            # receiving or sending a message to client
-            #
-            self.printQueue.put("\t'" + str(addr) + "' - connected")
-            
-            # Receive the first four bytes containing the length    
-            # of the message
-            #
-            raw_MSGLEN = self.__recvall__(clientSock, addr, 4)
-
-            # Ensure the length of the message is not empty
-            #
-            if not raw_MSGLEN:
-                clientSock.close()
-                continue
-            # Get the length of the message from the data header
-            #
-            MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
-            self.printQueue.put("expected len message = " + str(MSGLEN))
-            
-            # Output the message sent by the client to message parser 
-            # thread. Also pass the type of message
-            #
-            rawBuffer = self.__recvall__(clientSock, addr, MSGLEN)
-            self.printQueue.put("actual len message =" + str(len(rawBuffer)))
-
-            # Process RAW MESSAGE
-            #
-            self.__messageProcess__(clientSock, rawBuffer)
-
-            # Client closed connect so we close connection too. 
-            #
-            self.printQueue.put("\t'" + str(addr) + "' - disconnected.")
-            clientSock.close()
-
-            # Indicate we finished processing the enqueued socket
-            #
-            self.communicateQueue.task_done()
-        return 1
 
     # -- START FUNCTION DESCR --
     #
     # Decodes message based on its type
     #
     # Inputs:
-    #   clientSocket = A live connection to a client sending a message
-    #   rawBuffer = A message of type ToiChatProtocol received from client
+    #   - clientSocket = A live connection to a toiChatClient that
+    #       sent a message
+    #   - rawBuffer = A message of type ToiChatProtocol received from client
     #
     # Outputs:
     #   - Hands off message to appropriate handler. 
@@ -373,15 +392,16 @@ class toiChatServer():
         msgType = decodedToiMessage.WhichOneof("messageType")
         if msgType == self.getType[0]:
             decodeDnsMsg = ToiChatProtocol_pb2.DnsMessage()
-            decodeDnsMsg = decodedToiMessage
+            decodeDnsMsg = decodedToiMessage.dnsMessage
             self.printQueue.put(decodeDnsMsg)
-            #handleDnsMessage(decodeDnsMsg)
+            self.myToiChatNameServer.handleDnsMessage(decodeDnsMsg)
         elif msgType == self.getType[1]:
             decodeChatMsg = ToiChatProtocol_pb2.ChatMessage()
-            decodeDnsMsg = decodedToiMessage
+            decodeChatMsg = decodedToiMessage.chatMessage
             #handleChatMessage(decodeChatMsg)
         else:
             self.printQueue.put("Unknown MsgItem Type. '" + msgType + "'")
+            return 0
         return 1
 
     # -- START __FUNCTION DESCR --
@@ -393,7 +413,7 @@ class toiChatServer():
     #   - A string seen on printQueue
     #
     # Outputs:
-    #  - Prints to file 
+    #  - Prints to log file 
     #
     # -- END FUNCTION DESCR --
     def __printToFile__(self):
@@ -407,10 +427,11 @@ class toiChatServer():
                 break
             # Redirect print output to file
             #
-            serverOut = open('toiChatServer.log', 'a')
+            serverOut = open(self.logFileName, 'a')
             serverOut.write(str(text) + "\n")
             serverOut.close()
-            # Indicate we finished processing the enqueued item to print
+
+            # Indicate we finished processing the enqueued print request
             #
             self.printQueue.task_done()
         return 0
