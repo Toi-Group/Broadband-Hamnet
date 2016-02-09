@@ -17,34 +17,44 @@ class toiChatShell(cmd.Cmd):
     myFile = None
 
     # ----- basic toiChat commands -----
-    def do_startServer(self, arg):
+    def do_startserver(self, arg):
+        'Start the toiChat Server'
+        if self.askYesNo("Do you want start your server " +\
+                "on a non-standard port?"):
+            self.myToiChatServer.startServer(askForValidPort())
         self.myToiChatServer.startServer()
 
-    def do_startClient(self, arg):
+    def do_startclient(self, arg):
+        'Start the toiChat Client'
+        if self.askYesNo("Do you want to search for server " +\
+                "on a non-standard port?"):
+            self.myToiChatClient.attemptFindServer(askForValidPort())
         self.myToiChatServer.startServer()
 
-    def do_stopServer(self, arg):
+    def do_stopserver(self, arg):
+        'Stop the toiChat Server'
         self.myToiChatServer.stopServer()
 
-    def do_printDNSTable(self, arg):
+    def do_printdnstable(self, arg):
+        'Print Current DNS Table'
         self.myNameServer.printDNSTable()
 
-    def do_bye(self, arg): 
-        if self.myToiChatServer.statusServer:
-            if not askYesNo("Toi-Chat server is running in the " + \
+    def do_bye(self, arg):
+        'Stop recording, close the toiChat shell, and exit: BYE'
+        if self.myToiChatServer.statusServer == True:
+            if not self.askYesNo("Toi-Chat server is running in the " + \
                 "background. Are you sure you want to quit?"):
                 return 0
         print('Thank you for using toiChat!')
         self.close()
-        bye()
         return True
 
     # ----- record and playback -----
     def do_record(self, arg):
-        # Save future commands to filename:  RECORD rose.cmd'
+        'Save future commands to filename:  RECORD myToiChatPref.cmd'
         self.myFile = open(arg, 'w')
     def do_playback(self, arg):
-        # Playback commands from a file:  PLAYBACK rose.cmd'
+        'Playback commands from a file:  PLAYBACK myToiChatPref.cmd'
         self.close()
         with open(arg) as f:
             self.cmdqueue.extend(f.read().splitlines())
@@ -69,13 +79,13 @@ class toiChatShell(cmd.Cmd):
         # Prompt user for call sign input
         #
         myDesc = str("")
-        if askYesNo("Do you want to register any misc information? (optional)"):
+        if self.askYesNo("Do you want to register any misc information? (optional)"):
             myDesc = str(input("Enter misc information now?:\n >>  "))
 
         self.myToiChatClient = toiChatClient(callSign, myDesc)
-        self.myNameServer = toiChatNameServer(myToiChatClient)
-        self.myToiChatClient.updateNameServer(myNameServer)
-        self.myToiChatServer = toiChatServer(myNameServer)
+        self.myNameServer = toiChatNameServer(self.myToiChatClient)
+        self.myToiChatClient.updateNameServer(self.myNameServer)
+        self.myToiChatServer = toiChatServer(self.myNameServer)
 
         # Start toiChat shell
         #
