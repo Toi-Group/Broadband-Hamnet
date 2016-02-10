@@ -16,6 +16,14 @@ from modules.toiChatClient import toiChatClient # Used for replying to
                                                 # received messages
 import time # Used for documenting the local time of the DNS register
 import socket, struct, fcntl # Used for resolving local IP address
+from modules.conn_router import conn_router # Used for sending a request
+                                            # mesh network lan info to 
+                                            # local broadband hamnet router
+from modules.gatewayIP import gatewayIP # Used for finding the address
+                                        # of the local broadband hamnet
+                                        # router
+from modules.txArpInfo import txArpInfo # Used for instructing the router 
+                                        # to listen for incoming requests.
 
 class toiChatNameServer():
     # Types of commands to expect
@@ -70,7 +78,6 @@ class toiChatNameServer():
             time.strftime("%Y%m%d - %H:%M:%S"), \
             self.myToiChatClient.getDescription())
 
-
     # Returns the IPv4 address of the local machine for the given interface
     # 
     # Sourced from: http://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
@@ -102,7 +109,11 @@ class toiChatNameServer():
     # returns 'None' if IP does not exist
     #   
     def lookupIPByHostname(self, userHostname):
-        return self.dns[userHostname]['clientId']
+        try:
+            IP = self.dns[userHostname]['clientId']
+        except KeyError:
+            return None
+        return IP
 
     # method to return IP of user the client is attempting to contact
     # returns 'None' if IP does not exist
@@ -112,6 +123,25 @@ class toiChatNameServer():
             if self.dns[hostname]['clientId'] == userIP:
                 return hostname
         return None
+
+    # method to return last update of passedIP
+    #   
+    def lookupUpdateByHostname(self, userHostname):
+        try:
+            update = self.dns[userHostname]['lastUpdate']
+        except KeyError:
+            return None
+        return update
+
+    #  method to return last update of passed hostname
+    #   
+    def lookupUpdateByIP(self, userIP):
+        return self.lookupUpdateByHostname(userHostname)
+
+    # Return number of entries in our table
+    #   
+    def lookupDnsLegnth(self):
+        return len(self.dns)
 
     # Updates the current machines hostname entry in the internal dictionary
     #
@@ -145,18 +175,51 @@ class toiChatNameServer():
     # DNS message and register into local DNS
     #
     def handleRegisterDNS(self, registerDNSMessage):
+        # We started thinking we have a more updated table
+        #
+        moreUpdated = False
+
+        # Keep track of number of clients we add to our table
+        #
+        counter = 0
         # Loop through all repeated clients in DnsMessage
         #
         for newClient in registerDNSMessage.clients:
             # Check if user is in the DNS already
             #
             if newClient.clientName in self.dns:
-                # If user is already in DNS do nothing
+                # If user is already in DNS check if receiver has updated
+                # client information
                 #
-                continue
-            else:
-                self.addToDNS(newClient.clientName, newClient.clientId, \
-                    newClient.lastUpdate, newClient.description)
+                if self.lookupUpdateByHostname(newClient.clientName) > \
+                    newClient.lastUpdate:
+                    # We skip adding since our dns has a more updated
+                    # entry. We also need to reply to the client noting
+                    # we have a more updated entry
+                    #
+                    moreUpdated = True
+                    continue
+                # The two tables are in sync for this client so we continue
+                #
+                elif self.lookupUpdateByHostname(newClient.clientName) == \
+                    newClient.lastUpdate:
+                    continue
+
+            # The sender has a more updated dns entry for this client
+            # so we update our table
+            #
+            self.addToDNS(newClient.clientName, newClient.clientId, \
+                newClient.lastUpdate, newClient.description)
+            counter += 1
+
+        # Our dns table was more updated compared to the sender so
+        # we reply with our table
+        #
+        if (moreUpdated == True) or \
+            (len(registerDNSMessage.clients)-counter < self.lookupDnsLegnth()):
+            # We send a register dns message back to the sender
+            #
+            self.handleRequestDNS(registerDNSMessage)
         return 1
 
     # Handles a DnsMessage from a client who is requesting our DNS table.
@@ -245,3 +308,64 @@ class toiChatNameServer():
 
         return myDnsMessage
 
+    # -- START FUNCTION DESCR --
+    #
+    # Message locates the local Broadband Hamnet router and will
+    # send a command asking it to find all attached devices in the 
+    # mesh network. It will then attempt to contact each device in the
+    # network to see if any are running an instance of toiChatServer
+    #
+    # Inputs:
+    #   - toiServerPort = The port which we will attempt to contact other
+    #       toiChatServers.
+    #
+    # Outputs:
+    #   - Upon successful connection to another toiChatServer we will update
+    #       our current DNS table with its
+    #   - Upon failure to find another toiChatServer we will return an error
+    #
+    # -- END FUNCTION DESCR --
+    def attemptFindServer(self, toiServerPORT=5005):
+        # Get a list of IPs running Toi-Chat software on the mesh network
+        #
+        list_IPS = conn_router(gatewayIP())
+
+        # Check to see if there are any IPs in the returned ARP list
+        #
+        if list_IPS == None:
+            return 0
+
+        # Create a request DNS information request message
+        #
+        requestDNS = self.createRequestDnsMessage()
+
+        for toiServerIP in list_IPS:
+            # Print to stdout what we are trying to connect to
+            #
+            print("Trying to connect to '" + toiServerIP + "'...")
+            try:
+                self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
+                    toiServerPORT)
+            except Exception as e:
+                if toiServerIP == list_IPS[len(list_IPS)-1]:
+                    # We tried all IPs in the list and could not connect to 
+                    # any. Return error to stdout informing the user
+                    print("Could not connect to '" + toiServerIP + "'.\n" + \
+                        "Exited with status: \n\t" + str(e) + "\n" \
+                        "Exhausted known list of hosts.")
+                    return 0
+                else:
+                    print("Could not connect to '" + toiServerIP + "'... " + \
+                        "Exited with status: \n\t" + str(e) + "\n" \
+                        "Trying next IP in list.")
+                    continue 
+            # Did not fail to connect. Connection to server successful
+            # Break out of for loop
+            #
+            break
+        # After connection to a toiChatServer setup the local
+        # router to listen for new router arp requests
+        #txArpInfo()
+
+        print("Connection to a toiChatNetwork successful.")
+        return 1

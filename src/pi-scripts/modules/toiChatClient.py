@@ -13,14 +13,6 @@ from modules.protobuf import ToiChatProtocol_pb2 # Used for encoding
 import socket # Used for sending information to a server
 import struct, sys # Used to append the length of a message to the beginning
                    # of the message
-from modules.conn_router import conn_router # Used for sending a request
-                                            # mesh network lan info to 
-                                            # local broadband hamnet router
-from modules.gatewayIP import gatewayIP # Used for finding the address
-                                        # of the local broadband hamnet
-                                        # router
-from modules.txArpInfo import txArpInfo # Used for instructing the router to listen for 
-                                        # incoming requests.
 
 # toiChatClient sends messages to a toiChatServer in network
 #
@@ -99,69 +91,6 @@ class toiChatClient():
         oldName = self.myName
         self.myName = newName
         return self.myToiChatNameServer.updateMyName(oldName, self.myName)
-
-    # -- START FUNCTION DESCR --
-    #
-    # Message locates the local Broadband Hamnet router and will
-    # send a command asking it to find all attached devices in the 
-    # mesh network. It will then attempt to contact each device in the
-    # network to see if any are running an instance of toiChatServer
-    #
-    # Inputs:
-    #   - toiServerPort = The port which we will attempt to contact other
-    #       toiChatServers.
-    #
-    # Outputs:
-    #   - Upon successful connection to another toiChatServer we will update
-    #       our current DNS table with its
-    #   - Upon failure to find another toiChatServer we will return an error
-    #
-    # -- END FUNCTION DESCR --
-    def attemptFindServer(self, toiServerPORT=5005):
-        # Get a list of IPs running Toi-Chat software on the mesh network
-        #
-        list_IPS = conn_router(gatewayIP())
-
-        # Check to see if there are any IPs in the returned ARP list
-        #
-        if list_IPS == None:
-            return 0
-
-        # Create a request DNS information request message
-        #
-        requestDNS = self.myToiChatNameServer.createRequestDnsMessage()
-
-        for toiServerIP in list_IPS:
-            # Print to stdout what we are trying to connect to
-            #
-            print("Trying to connect to '" + toiServerIP + "'...")
-            try:
-                self.sendMessage(toiServerIP, requestDNS, toiServerPORT)
-            except Exception as e:
-                if toiServerIP == list_IPS[len(list_IPS)-1]:
-                    # We tried all IPs in the list and could not connect to 
-                    # any. Return error to stdout informing the user
-                    print("Could not connect to '" + toiServerIP + "'.\n" + \
-                        "Exited with status: \n\t" + str(e) + "\n" \
-                        "Exhausted known list of hosts.\n\n")
-                    return 0
-                else:
-                    print("Could not connect to '" + toiServerIP + "'... " + \
-                        "Exited with status: \n\t" + str(e) + "\n" \
-                        "Trying next IP in list.")
-                    continue 
-            # Did not fail to connect. Connection to server successful
-            # Break out of for loop
-            #
-            break
-
-        # After connection to a toiChatServer setup the local
-        # router to listen for new router arp requests
-        #txArpInfo()
-
-        print("Connection to a toiChatNetwork successful.")
-        return 1
-
     
     # -- START FUNCTION DESCR --
     #
