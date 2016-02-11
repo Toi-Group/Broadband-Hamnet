@@ -1,8 +1,13 @@
 # Import Modules
 import os, sys
 import subprocess
-
-def listen_router(default_gateway):
+from gatewayIP import gatewayIP
+def listen_router():
+    
+    # Find the default gateway
+    # 
+    default_gateway = gatewayIP()
+    print (default_gateway)
     # Find directory with router scripts
     #
     scriptPath = os.path.join(os.path.join( \
