@@ -2,21 +2,21 @@
 import os, sys
 import subprocess
 from gatewayIP import gatewayIP
-def listen_router():
-    
+#def listen_router():
+def main():    
     # Find the default gateway
     # 
     default_gateway = gatewayIP()
     print (default_gateway)
     # Find directory with router scripts
     #
-    scriptPath = os.path.join(os.path.join( \
-        os.path.dirname(os.path.dirname(os.path.dirname( \
-        os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__)))))), \
-        "router-scripts"), \
-        'router_tx_arpinfo.sh')
-
+    # scriptPath = os.path.join(os.path.join( \
+    #    os.path.dirname(os.path.dirname(os.path.dirname( \
+    #    os.path.dirname(os.path.dirname(
+    #    os.path.abspath(__file__)))))), \
+    #    "router-scripts"), \
+    #    'router_tx_arpinfo.sh')
+    scriptPath = "../etc/router_tx_arpinfo.sh"
     # Try to open 'router_request_arpinf.sh'
     #
     if (os.path.isfile(scriptPath) == False):
@@ -41,3 +41,5 @@ def listen_router():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
+if __name__ =='__main__':
+    main()
