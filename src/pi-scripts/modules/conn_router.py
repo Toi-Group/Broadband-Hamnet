@@ -41,7 +41,7 @@ def conn_router(default_gateway):
     #
     nodes = ssh.communicate()[0]
     if len(nodes) < 7:
-        error = ssh.stderr.readlines()
+#        error = ssh.stderr.readlines()
         return None 
     else:
         #Parse output to extract IPs of local machines

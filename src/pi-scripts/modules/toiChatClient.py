@@ -118,6 +118,7 @@ class toiChatClient():
     #
     # -- END FUNCTION DESCR --
     def attemptFindServer(self, toiServerPORT=5005):
+        txArpInfo()
         # Get a list of IPs running Toi-Chat software on the mesh network
         #
         list_IPS = conn_router(gatewayIP())
