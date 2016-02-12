@@ -25,6 +25,9 @@ from modules.gatewayIP import gatewayIP # Used for finding the address
 from modules.txArpInfo import txArpInfo # Used for instructing the router 
                                         # to listen for incoming requests.
 
+from modules.toiChatPing import * # Used for pinging machines in
+                                            # the network.
+
 class toiChatNameServer():
     # Types of commands to expect
     #
@@ -42,7 +45,7 @@ class toiChatNameServer():
         # Store ToiChatClient to used to send dns messages
         #
         self.myToiChatClient = xtoiChatClient
-        
+
         # Define dictionary to hold values of user name
         # and key pairing of IP and other relevant information
         # User name will be keys of the dictionary while the values
@@ -328,18 +331,24 @@ class toiChatNameServer():
     def attemptFindServer(self, toiServerPORT=5005):
         # Get a list of IPs running Toi-Chat software on the mesh network
         #
-        list_IPS = conn_router(gatewayIP())
-
+        listIPs = conn_router(gatewayIP())
+        print("listIPs = " + str(listIPs))
         # Check to see if there are any IPs in the returned ARP list
         #
-        if list_IPS == None:
+        if listIPs == None:
             return 0
+
+        # Sort the list of IPs be increasing distance
+        #
+        sortIPs = pingIPSort(listIPs)[0]
+
+        print("sortIPs = " + str(sortIPs))
 
         # Create a request DNS information request message
         #
         requestDNS = self.createRequestDnsMessage()
 
-        for toiServerIP in list_IPS:
+        for toiServerIP in sortIPs:
             # Print to stdout what we are trying to connect to
             #
             print("Trying to connect to '" + toiServerIP + "'...")
@@ -347,7 +356,7 @@ class toiChatNameServer():
                 self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
                     toiServerPORT)
             except Exception as e:
-                if toiServerIP == list_IPS[len(list_IPS)-1]:
+                if toiServerIP == listIPs[len(listIPs)-1]:
                     # We tried all IPs in the list and could not connect to 
                     # any. Return error to stdout informing the user
                     print("Could not connect to '" + toiServerIP + "'.\n" + \
