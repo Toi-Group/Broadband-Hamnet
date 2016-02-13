@@ -19,13 +19,13 @@ message DnsMessage {
     required string command = 1;
     required string clientName = 2; // Hostname/CallSign
     required string clientId = 3; // IPaddress
-    required string lastUpdate = 4;
+    required string dateAdded = 4;
     optional string description = 5 [default = "NONE"]; // Misc Info.
     message DNSClients {
-        required string clientName = 6; // Hostname/CallSign
-        required string clientId = 7; // IPaddress
-        required string lastUpdate = 8;
-        optional string description = 9 [default = "NONE"]; // Misc Info.
+        required string clientName = 1; // Hostname/CallSign
+        required string clientId = 2; // IPaddress
+        required string dateAdded = 3; // Time IP registered
+        optional string description = 4 [default = "NONE"]; // Misc Info.
     }
     repeated DNSClients clients = 6;
 }

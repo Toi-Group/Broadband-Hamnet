@@ -9,8 +9,10 @@
 # Author: Toi-Group
 #
 
-from modules.external.python_ping.ping import *
+from modules.external.python_ping.ping import quiet_ping
 from collections import OrderedDict
+import os, sys # Used for redirecting any print statement to null
+
 # Pings a list of IPs. 
 # 
 # Input:
@@ -21,6 +23,8 @@ from collections import OrderedDict
 # - Tuple 2: List of invalid IPs
 #
 def pingIPSort(listIPs, myCount=1):
+    # Setup dictionaries
+    #
     pingResult = {}
     invalidIPs = []
     sortedIPs = {}
@@ -28,14 +32,13 @@ def pingIPSort(listIPs, myCount=1):
     # We now have a list of IPs. We sort them by fastest ping
     #
     for destIP in listIPs:
-        print("destIP = " + str(destIP))
         # We now have a list of IPs. We sort them by fastest ping
         #
         avgTime = quiet_ping(destIP, count=myCount)
         
         # Check to see if quient_ping return valid results
         #
-        if (isinstance(avgTime, bool) == True) or avgTime == 0:
+        if (isinstance(avgTime, bool) == True) or avgTime[2] == 0:
             invalidIPs.append(destIP)
             # We skip adding this IP to the dictionary
             #
@@ -49,5 +52,18 @@ def pingIPSort(listIPs, myCount=1):
     #
     sortedIPs = OrderedDict(sorted(pingResult.items()))
 
-    print(str(sortedIPs))
-    return list(sortedIPs.keys()), invalidIPs
+    return list(sortedIPs.keys()), str(invalidIPs)
+
+def pingOne(destIP, myCount=1):
+    # Ping the machine passed
+    #
+    avgTime = quiet_ping(destIP, count=myCount)
+
+    # Check to see if quient_ping return valid results
+    #
+    if (isinstance(avgTime, bool) == True) or avgTime[2] == 0:
+        return None
+
+    # If we have a valid IP then return it
+    #
+    return avgTime[2]

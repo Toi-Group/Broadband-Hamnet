@@ -65,7 +65,6 @@ def conn_router(default_gateway):
         #
         if valid_IPs == []:
             return None
-    print("valid IPs = " + str(valid_IPs))
     #Return a list of IPs found on the mesh network
     #
     return valid_IPs
