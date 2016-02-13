@@ -13,40 +13,60 @@ import cmd, sys
 class toiChatShell(cmd.Cmd):
 
     intro = "ToiChat - A Mesh Network optimized communication application."
-    prompt = "toiChatShell >> "
+    prompt = "\ntoiChatShell >> "
     myFile = None
 
     # ----- basic toiChat commands -----
     def do_startserver(self, arg):
         'Start the toiChat Server'
+        if self.myToiChatServer.statusServer() == True:
+            print("Server is already running.")
+            return
         if self.askYesNo("Do you want start your server " +\
                 "on a non-standard port?"):
             self.myToiChatServer.startServer(askForValidPort())
         self.myToiChatServer.startServer()
 
-    def do_startclient(self, arg):
-        'Start the toiChat Client'
+    def do_forceupdatedns(self, arg):
+        'Connects to local router in a attempt to find other toiChatServers'
+        if self.myToiChatServer.statusServer() == False:
+            print("We found you are not running a ToiChatServer " + \
+            "yet. Please start the toiChatServer before continuing.")
+            return
         if self.askYesNo("Do you want to search for server " +\
                 "on a non-standard port?"):
-            self.myToiChatClient.attemptFindServer(askForValidPort())
-        self.myToiChatClient.attemptFindServer()
+            self.myNameServer.attemptFindServer(askForValidPort())
+        self.myNameServer.attemptFindServer()
 
     def do_stopserver(self, arg):
         'Stop the toiChat Server'
-        self.myToiChatServer.stopServer()
+        if self.myToiChatServer.stopServer() == False:
+            print("Attempt to stop server failed. Please try again")
+            return
+        return
 
-    def do_printdnstable(self, arg):
+    def do_statusserver(self, arg):
+        if self.myToiChatServer.statusServer() == False:
+            print("Server is not running.")
+        elif self.myToiChatServer.statusServer() == True:
+            print("Server is running.")
+        return
+
+    def do_printdns(self, arg):
         'Print Current DNS Table'
         self.myNameServer.printDNSTable()
 
     def do_bye(self, arg):
         'Stop recording, close the toiChat shell, and exit: BYE'
-        if self.myToiChatServer.statusServer == True:
-            if not self.askYesNo("Toi-Chat server is running in the " + \
+        if self.myToiChatServer.statusServer() == True:
+            if self.askYesNo("Toi-Chat server is running in the " + \
                 "background. Are you sure you want to quit?"):
-                return 0
-        print('Thank you for using toiChat!')
+                if self.do_stopserver() == False:
+                    return
+            else:
+                return
         self.close()
+        print('Thank you for using toiChat!')
         return True
 
     # ----- record and playback -----

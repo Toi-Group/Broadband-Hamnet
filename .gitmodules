@@ -1,0 +1,3 @@
+[submodule "src/pi-scripts/modules/external/python_ping"]
+	path = src/pi-scripts/modules/external/python_ping
+	url = https://github.com/l4m3rx/python-ping

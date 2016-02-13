@@ -57,3 +57,5 @@ __pycache__/
 toi-chat.sublime-project
 sftp-config.json
 toi-chat.sublime-workspace
+*.sublime-project
+*.sublime-workspace

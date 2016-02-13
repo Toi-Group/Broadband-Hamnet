@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='ToiChatProtocol.proto',
   package='ToiChatProtocol',
-  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"\x8e\x02\n\nDnsMessage\x12\x0f\n\x07\x63ommand\x18\x01 \x02(\t\x12\x12\n\nclientName\x18\x02 \x02(\t\x12\x10\n\x08\x63lientId\x18\x03 \x02(\t\x12\x12\n\nlastUpdate\x18\x04 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x05 \x01(\t:\x04NONE\x12\x37\n\x07\x63lients\x18\x06 \x03(\x0b\x32&.ToiChatProtocol.DnsMessage.DNSClients\x1a\x61\n\nDNSClients\x12\x12\n\nclientName\x18\x06 \x02(\t\x12\x10\n\x08\x63lientId\x18\x07 \x02(\t\x12\x12\n\nlastUpdate\x18\x08 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\t \x01(\t:\x04NONE\"\x19\n\x0b\x43hatMessage\x12\n\n\x02id\x18\x01 \x02(\t')
+  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"\x8c\x02\n\nDnsMessage\x12\x0f\n\x07\x63ommand\x18\x01 \x02(\t\x12\x12\n\nclientName\x18\x02 \x02(\t\x12\x10\n\x08\x63lientId\x18\x03 \x02(\t\x12\x11\n\tdateAdded\x18\x04 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x05 \x01(\t:\x04NONE\x12\x37\n\x07\x63lients\x18\x06 \x03(\x0b\x32&.ToiChatProtocol.DnsMessage.DNSClients\x1a`\n\nDNSClients\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\t\x12\x11\n\tdateAdded\x18\x03 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"\x19\n\x0b\x43hatMessage\x12\n\n\x02id\x18\x01 \x02(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -74,28 +74,28 @@ _DNSMESSAGE_DNSCLIENTS = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='clientName', full_name='ToiChatProtocol.DnsMessage.DNSClients.clientName', index=0,
-      number=6, type=9, cpp_type=9, label=2,
+      number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='clientId', full_name='ToiChatProtocol.DnsMessage.DNSClients.clientId', index=1,
-      number=7, type=9, cpp_type=9, label=2,
+      number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='lastUpdate', full_name='ToiChatProtocol.DnsMessage.DNSClients.lastUpdate', index=2,
-      number=8, type=9, cpp_type=9, label=2,
+      name='dateAdded', full_name='ToiChatProtocol.DnsMessage.DNSClients.dateAdded', index=2,
+      number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
       name='description', full_name='ToiChatProtocol.DnsMessage.DNSClients.description', index=3,
-      number=9, type=9, cpp_type=9, label=1,
+      number=4, type=9, cpp_type=9, label=1,
       has_default_value=True, default_value=_b("NONE").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -111,8 +111,8 @@ _DNSMESSAGE_DNSCLIENTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=354,
-  serialized_end=451,
+  serialized_start=353,
+  serialized_end=449,
 )
 
 _DNSMESSAGE = _descriptor.Descriptor(
@@ -144,7 +144,7 @@ _DNSMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='lastUpdate', full_name='ToiChatProtocol.DnsMessage.lastUpdate', index=3,
+      name='dateAdded', full_name='ToiChatProtocol.DnsMessage.dateAdded', index=3,
       number=4, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -176,7 +176,7 @@ _DNSMESSAGE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=181,
-  serialized_end=451,
+  serialized_end=449,
 )
 
 
@@ -205,8 +205,8 @@ _CHATMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=453,
-  serialized_end=478,
+  serialized_start=451,
+  serialized_end=476,
 )
 
 _TOICHATMESSAGE.fields_by_name['dnsMessage'].message_type = _DNSMESSAGE
