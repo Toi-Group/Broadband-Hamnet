@@ -17,6 +17,13 @@ import struct, sys # Used to append the length of a message to the beginning
 # toiChatClient sends messages to a toiChatServer in network
 #
 class toiChatClient():
+
+    # Types of messages to expect as defined in ToiChatProtocol
+    #
+    getType={
+        0:"dnsMessage",
+        1:"chatMessage"
+    }
     # -- START CLASS CONSTRUCTOR -- 
     #
     # ToiChat class handling client side communication
@@ -164,3 +171,40 @@ class toiChatClient():
         return self.sendMessage(\
             self.myToiChatNameServer.lookupIPByHostname(toiServerHostname),
             decodedToiMessage, toiServerPORT)
+
+    # Create a message populating the headers of the DnsMessage type
+    # with this client information.
+    #
+    def createTemplateIdentifierMessage(self, messageType):
+        # Create new ToiChatMessage
+        #
+        myMessage = ToiChatProtocol_pb2.ToiChatMessage()
+
+        # Get the client name
+        #
+        myName = self.getName()
+        
+        # Create message based on type and fill myMessage message with 
+        # my information
+        #
+        if messageType == self.getType[0]:
+            # Fill myMessage message with my information
+            #
+            myMessage.dnsMessage.id.clientName = myName
+            myMessage.dnsMessage.id.clientId = \
+                self.myToiChatNameServer.lookupIPByHostname(myName)
+            myMessage.dnsMessage.id.dateAdded = \
+                self.myToiChatNameServer.lookupAddedByHostname(myName)
+            myMessage.dnsMessage.id.description = \
+                self.myToiChatNameServer.lookupDescByHostname(myName)
+        elif messageType == self.getType[1]:
+            myMessage.chatMessage.id.clientName = myName
+            myMessage.chatMessage.id.clientId = \
+                self.myToiChatNameServer.lookupIPByHostname(myName)
+            myMessage.chatMessage.id.dateAdded = \
+                self.myToiChatNameServer.lookupAddedByHostname(myName)
+            myMessage.chatMessage.id.description = \
+                self.myToiChatNameServer.lookupDescByHostname(myName)
+        else:
+            return None
+        return myMessage

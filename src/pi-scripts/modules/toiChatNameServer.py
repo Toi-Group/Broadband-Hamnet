@@ -28,6 +28,7 @@ from modules.toiChatPing import * # Used for pinging machines in
                                             # the network.
 from threading import Timer, Lock, Thread # Used for pining servers every
                                           # interval.
+import pprint # for printing dns tables nicely
 
 class toiChatNameServer():
 
@@ -100,7 +101,23 @@ class toiChatNameServer():
     # Print the current dns lookup table to the console
     #
     def printDNSTable(self):
-        print(self.dns)
+        pp = pprint.PrettyPrinter(width=41, compact=True)
+        pp.pprint(self.dns)
+        return 1
+        
+    # Print the current clients in the DNS table
+    #
+    def printClients(self):
+        pp = pprint.PrettyPrinter(width=41, compact=True)
+        # To print all clients we first have to remove our name from the 
+        # dns table
+        #
+        myName = self.myToiChatClient.getName()
+        clientList = []
+        for key in self.dns.keys():
+            if not key == myName:
+                clientList.append(key)
+        pp.pprint(clientList)
         return 1
 
     # Returns the IPv4 address of the local machine for the given interface
@@ -213,7 +230,7 @@ class toiChatNameServer():
 
     # method to return last update of passedIP
     #   
-    def lookupUpdateByHostname(self, userHostname):
+    def lookupAddedByHostname(self, userHostname):
         try:
             update = self.dns[userHostname]['dateAdded']
         except KeyError:
@@ -223,7 +240,7 @@ class toiChatNameServer():
     #  method to return last update of passed hostname
     #   
     def lookupUpdateByIP(self, userIP):
-        return self.lookupUpdateByHostname(userHostname)
+        return self.lookupAddedByHostname(userHostname)
 
     # Return number of entries in our table
     #   
@@ -341,7 +358,7 @@ class toiChatNameServer():
                 # If user is already in DNS check if receiver has updated
                 # client information
                 #
-                if self.lookupUpdateByHostname(newClient.clientName) > \
+                if self.lookupAddedByHostname(newClient.clientName) > \
                     newClient.dateAdded:
                     # We skip adding since our dns has a more updated
                     # entry. We also need to reply to the client noting
@@ -351,7 +368,7 @@ class toiChatNameServer():
                     continue
                 # The two tables are in sync for this client so we continue
                 #
-                elif self.lookupUpdateByHostname(newClient.clientName) == \
+                elif self.lookupAddedByHostname(newClient.clientName) == \
                     newClient.dateAdded:
                     continue
 
@@ -378,7 +395,7 @@ class toiChatNameServer():
     def handleRequestDNS(self, requestDNSMessage):
         # Get the information about the client requesting DNS information
         #
-        returnAddress = requestDNSMessage.clientId
+        returnAddress = requestDNSMessage.id.clientId
 
         # Create a new Register DNS Message
         #
@@ -401,7 +418,8 @@ class toiChatNameServer():
 
         # Create a template DNS message
         #
-        registerDNS = self.createTemplateDnsMessage()
+        registerDNS = \
+            self.myToiChatClient.createTemplateIdentifierMessage("dnsMessage")
 
         # Populate the command command with status of "register"
         #
@@ -409,7 +427,7 @@ class toiChatNameServer():
 
         # Create a DNSclient message for each client in our DNS dictionary
         #
-        registerDNSClient = ToiChatProtocol_pb2.DnsMessage.DNSClients()
+        registerDNSClient = ToiChatProtocol_pb2.Identifier()
 
         # Acquire DNS table manipulate lock
         #
@@ -442,7 +460,8 @@ class toiChatNameServer():
     def createRequestDnsMessage(self):
         # Create a template DNS message
         #
-        requestDNS = self.createTemplateDnsMessage()
+        requestDNS = \
+            self.myToiChatClient.createTemplateIdentifierMessage("dnsMessage")
 
         # Populate the command we will use in the message with the
         # request dnsMessage value
@@ -451,29 +470,7 @@ class toiChatNameServer():
 
         #return requestDNS message
         #
-        return requestDNS    
-
-    # Create a message populating the headers of the DnsMessage type
-    # with this client information.
-    #
-    def createTemplateDnsMessage(self):
-        # Create new ToiChatMessage
-        #
-        myDnsMessage = ToiChatProtocol_pb2.ToiChatMessage()
-
-        # Get the client name
-        #
-        myName = self.myToiChatClient.getName()
-        
-        # Fill myDnsMessage message with my information
-        #
-        myDnsMessage.dnsMessage.clientName = myName
-        myDnsMessage.dnsMessage.clientId = self.dns[myName]['clientId']
-        myDnsMessage.dnsMessage.dateAdded = self.dns[myName]['dateAdded']
-        myDnsMessage.dnsMessage.description = self.dns[myName]['description']
-
-        return myDnsMessage
-
+        return requestDNS
 
     # -----------------------------------------------------------------
     # ------------------- START OF AUTO PING FUNCTIONS ----------------
