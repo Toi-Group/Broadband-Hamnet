@@ -15,7 +15,12 @@ from modules.protobuf import ToiChatProtocol_pb2 # Used for DnsMessage
 from modules.toiChatClient import toiChatClient # Used for replying to 
                                                 # received messages
 import time # Used for documenting the local time of the DNS register
+from threading import Timer, Lock, Thread # Used for pining servers every
+                                          # interval.
+import pprint # for printing dns tables nicely
 import socket, struct, fcntl # Used for resolving local IP address
+import queue # Used for printing thread outputs to log file
+
 from modules.conn_router import conn_router # Used for sending a request
                                             # mesh network lan info to 
                                             # local broadband hamnet router
@@ -26,12 +31,9 @@ from modules.txArpInfo import txArpInfo # Used for instructing the router
                                         # to listen for incoming requests.
 from modules.toiChatPing import * # Used for pinging machines in
                                             # the network.
-from threading import Timer, Lock, Thread # Used for pining servers every
-                                          # interval.
-import pprint # for printing dns tables nicely
+
 
 class toiChatNameServer():
-
     # Types of commands to expect
     #
     getCommand={
@@ -46,10 +48,26 @@ class toiChatNameServer():
     # and description to the dns lookup table
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xtoiChatClient):
+    def __init__(self, toiChatClient, \
+        logFileName = 'toiChatNameServer.log'):
+
+        # Filename where should we save server logs to
+        #
+        self.logFileName = logFileName
+
+        # Create a print to file queue
+        #
+        self.printQueue = queue.Queue()
+
+        # Print server output to file thread
+        #
+        self.W = Thread(target=self.__printToFile__)
+        self.W.daemon = True
+        self.W.start()
+
         # Store ToiChatClient to used to send dns messages
         #
-        self.myToiChatClient = xtoiChatClient
+        self.myToiChatClient = toiChatClient
 
         # Variable to tell wait until next thread 
         #
@@ -91,6 +109,8 @@ class toiChatNameServer():
         #
         #
         self.dns = {}
+
+        self.printQueue.put("Starting new toiChatNameServer instance.")
 
         # Register local machine in DNS replacing any old values
         #
@@ -147,6 +167,10 @@ class toiChatNameServer():
         #
         self.dnsTableLock.acquire()
 
+        # Print to log file we are adding a new entry
+        #
+        self.printQueue.put("Adding - '" + str(clientName) + "' to " + \
+            "DNS table.")
         # Update dictionary with passed information
         #
         self.dns[clientName] = {}
@@ -173,6 +197,11 @@ class toiChatNameServer():
         # Acquire DNS table manipulate lock
         #
         self.dnsTableLock.acquire()
+
+        # Print to log file we are removing a new entry
+        #
+        self.printQueue.put("Removing - '" + str(clientName) + "' from " + \
+            "DNS table.")
 
         # Update dictionary with passed information
         #
@@ -293,7 +322,8 @@ class toiChatNameServer():
         for toiServerIP in sortIPs:
             # Print to stdout what we are trying to connect to
             #
-            print("Trying to connect to '" + toiServerIP + "'...")
+            self.printQueue.put("Trying to connect to '" + \
+                str.strip(toiServerIP) + "'...")
             try:
                 self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
                     toiServerPORT)
@@ -301,24 +331,24 @@ class toiChatNameServer():
                 if toiServerIP == listIPs[len(listIPs)-1]:
                     # We tried all IPs in the list and could not connect to 
                     # any. Return error to stdout informing the user
-                    print("Could not connect to '" + toiServerIP + "'.\n" + \
-                        "Exited with status: \n\t" + str(e) + "\n" \
-                        "Exhausted known list of hosts.")
+                    self.printQueue.put("Could not connect to '" + \
+                        toiServerIP + "'. Exited with status: " + \
+                        str(e) + ". Exhausted known list of hosts.")
                     return 0
                 else:
-                    print("Could not connect to '" + toiServerIP + "'... " + \
-                        "Exited with status: \n\t" + str(e) + "\n" \
-                        "Trying next IP in list.")
+                    self.printQueue.put("Could not connect to '" + \
+                        + toiServerIP + "'... Exited with status: " + \
+                        str(e) + "Trying next IP in list.")
                     continue 
             # Did not fail to connect. Connection to server successful
             # Break out of for loop
             #
+            self.printQueue.put("Connection to '" + \
+                str.strip(toiServerIP) + "' successful!")
             break
         # After connection to a toiChatServer setup the local
         # router to listen for new router arp requests
         #txArpInfo()
-
-        print("Connection to a toiChatNetwork successful.")
         return 1
 
     # --------------------------------------------------------------------
@@ -329,12 +359,19 @@ class toiChatNameServer():
     #
     def handleDnsMessage(self, myDnsMessage):
         if myDnsMessage.command == self.getCommand[0]:
+            self.printQueue.put("Received a '" + \
+                str(self.getCommand[0]) + "' DNS message from '" + \
+                myDnsMessage.id.clientId + "'.")
             self.handleRegisterDNS(myDnsMessage)
         elif myDnsMessage.command == self.getCommand[1]:
+            self.printQueue.put("Received a '" + \
+                str(self.getCommand[1]) + "' DNS message from '" + \
+                myDnsMessage.id.clientId + "'.")
             self.handleRequestDNS(myDnsMessage)
         else:
-            print("Unknown DNSMessage Command. '" + \
-                str(myDnsMessage.command) + "'")
+            self.printQueue.put("Unknown DNSMessage Command: '" + \
+                str(myDnsMessage.command) + "' received from '" + \
+                myDnsMessage.id.clientId + "'.")
             return 0
         return 1
 
@@ -401,6 +438,8 @@ class toiChatNameServer():
         #
         myRequestDNS = self.createRegisterDnsMessage()
 
+        self.printQueue.put("Sending a '" + str(self.getCommand[1]) + \
+            "' message to '" + str(returnAddress) +"'.")
         # Send message back to requester
         #
         self.myToiChatClient.sendMessage(returnAddress, myRequestDNS)
@@ -527,17 +566,24 @@ class toiChatNameServer():
         # Create a list to contain IPs we could not reach
         #
         listToDelete = []
+
         # Loop through each entry in the internal DNS
         #
         for hostname in self.dns.keys():
-            avgPing = pingOne(self.lookupIPByHostname(hostname), icmpPcks)
-
-            # Get if queueEXIT STATUS is true. Stop thread if true.
+            # Get if stopDNSPing status. Stop thread if true.
             #
             if self.stopDNSPing == True:
+                # Log we quit pinging
+                #
+                self.printQueue("Pinging stopped due to interrupt.")
                 # Check to see if we should quit pinging
                 #
                 break
+
+            # Log we are pinging a user
+            #
+            self.printQueue.put("Pinging '" + str(hostname) + "'.")
+            avgPing = pingOne(self.lookupIPByHostname(hostname), icmpPcks)
 
             # If the Pi can not ping the client in its DNS table
             # assume the client went off-line. Delete it from our table
@@ -546,17 +592,85 @@ class toiChatNameServer():
                 # Delete entry from DNS
                 #
                 listToDelete.append(hostname)
+                self.printQueue.put("'" + str(hostname) + "' did not " + \
+                    "respond.")
                 continue
+            
             # Otherwise we update the lastPingVal of the client
             #
+            self.printQueue.put("'" + str(hostname) + "' responded. " + \
+                "Average ping time = " + str(avgPing) + " ms. ")
             self.dns[hostname]['lastPingVal'] = avgPing
 
-        # Delete all IPs we could not contact
+        # Check to see if we would be deleting our entire table
         #
-        for clientIP in listToDelete:
-            del self.dns[clientIP]
+        if len(listToDelete) == self.lookupDnsLegnth():
+            # If the two tables match print that we are probably disconnected
+            # from the Internet
+            #
+            self.printQueue.put("We can not reach any clients. Please " + \
+                "check your internet connection.")
+
+            # Erase the current stdout prompt but store it first
+            # 
+            sys.stdout.write('\r'+' '*(len(readline.get_line_buffer())+2)+'\r')
+
+            # Print the message from the receiver
+            #
+            sys.stdout.write("Network connection error. Ensure you " + \
+                "are connected to the network.")
+
+            # Print the message that came before
+            #
+            sys.stdout.write(" >> " + readline.get_line_buffer())
+            sys.stdout.flush()
+        else: 
+            # Delete all IPs we could not contact
+            #
+            for clientIP in listToDelete:
+                # Print to log file we are removing a new entry
+                #
+                self.printQueue.put("Removing - '"  + \
+                    + str(self.lookupHostnameByIP(clientIP)) + \
+                    "' from " + "DNS table.")
+                del self.dns[clientIP]
 
         # Release DNS table manipulation lock
         #
         self.dnsTableLock.release()
         return 1
+
+    # -- START __FUNCTION DESCR --
+    #
+    # Processes print statement for server function and prints them
+    # to a file. 
+    #
+    # Inputs:
+    #   - A string seen on printQueue
+    #
+    # Outputs:
+    #  - Prints to log file 
+    #
+    # -- END FUNCTION DESCR --
+    def __printToFile__(self, subMessage=False):
+        while True:
+            # Get an item to print
+            #
+            text = self.printQueue.get()
+
+            # Redirect print output to file
+            #
+            serverOut = open(self.logFileName, 'a')
+
+            if subMessage == False:
+                serverOut.write(time.strftime("%Y%m%d - %H:%M:%S") + \
+                    " - " + str(text) + "\n")
+            else:
+                serverOut.write("\t" + time.strftime("%Y%m%d - %H:%M:%S") + \
+                    " - " + str(text) + "\n")
+            serverOut.close()
+
+            # Indicate we finished processing the enqueued print request
+            #
+            self.printQueue.task_done()
+        return 0

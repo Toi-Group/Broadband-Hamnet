@@ -44,10 +44,10 @@ class toiChatServer():
     #
     # -- END CLASS CONSTRUCTOR -- 
     def __init__(self, toiChatNameServer, PORT_TOICHAT=5005, \
-        xlogFileName = 'toiChatServer.log'):
+        logFileName = 'toiChatServer.log'):
         # Filename where should we save server logs to
         #
-        self.logFileName = xlogFileName
+        self.logFileName = logFileName
 
         # Store ToiChatNameServer to use
         #
@@ -348,6 +348,12 @@ class toiChatServer():
         # designated port
         #
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSock:
+            # Set socket lifetime after close to none
+            #
+            # See http://stackoverflow.com/questions/4465959/python-errno-98-address-already-in-use
+            serverSock.setsockopt(socket.SOL_SOCKET, \
+                socket.SO_REUSEADDR, 1)
+
             # Bind to localhost on PORT_TOICHAT 
             #
             serverSock.bind(SERVER)

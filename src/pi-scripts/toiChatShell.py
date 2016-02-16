@@ -9,7 +9,7 @@ from modules.toiChatServer import toiChatServer
 from modules.toiChatClient import toiChatClient
 from modules.toiChatter import toiChatter
 from modules.toiChatNameServer import toiChatNameServer
-import cmd, sys
+import cmd, sys, os
 
 class toiChatShell(cmd.Cmd):
 
@@ -43,7 +43,12 @@ class toiChatShell(cmd.Cmd):
             return
         if yesNoReponse == True:
             self.myNameServer.attemptFindServer(askForValidPort())
-        self.myNameServer.attemptFindServer()
+        if self.myNameServer.attemptFindServer()== True:
+            print("Connection to a toiChatNetwork successful.")
+            return
+        else:
+            print("Connection to a toiChatNetwork failed. Please try " + \
+                "again in a few minutes.")
 
     def do_stopserver(self, arg):
         'Stop the toiChat Server'
@@ -98,16 +103,16 @@ class toiChatShell(cmd.Cmd):
     def do_bye(self, arg):
         'Stop recording, close the toiChat shell, and exit: BYE'
         if self.myToiChatServer.statusServer() == True:
-            if self.askYesNo("Toi-Chat server is running in the " + \
-                "background. Are you sure you want to quit?"):
-                if self.myToiChatServer.stopServer() == False:
-                    print("Attempt to stop server failed. Please try again")
-                    return
-            else:
+            print("Toi-Chat server is running in the " + \
+                "background.\n")
+        if self.askYesNo("Are you sure you want to quit?") == True:
+            if self.myToiChatServer.stopServer() == False:
+                print("Attempt to stop server failed. Please try again")
                 return
-        self.close()
-        print('Thank you for using toiChat!')
-        return True
+            self.close()
+            print('\nThank you for using TOIChat!')
+            return
+        
 
     # ----- record and playback -----
     def do_record(self, arg):
@@ -140,7 +145,7 @@ class toiChatShell(cmd.Cmd):
                     "(call sign)?:\n >>  ")).lower()
             except KeyboardInterrupt:
                 self.close()
-                print('\nThank you for using toiChat!')
+                print('\nThank you for using TOIChat!')
                 return True
             # Prompt user for call sign input
             #
@@ -198,5 +203,22 @@ class toiChatShell(cmd.Cmd):
                     print("Port must be in range 0-65535!")
                     continue
 
+    # Catch keyboard interrupt
+    #
+    def cmdloop(self):
+        try:
+            cmd.Cmd.cmdloop(self)
+        except KeyboardInterrupt as e:
+            print("\n")
+            # Upon interrupt on main console shut down server and close
+            #
+            self.myToiChatServer.stopServer()
+            sys.exit(0)
+
 if __name__ == '__main__':
+    # Check to make sure the program is ran as root
+    #
+    if not os.geteuid() == 0:
+        print("You need to run this program with administrative privileges.")
+        sys.exit(0)
     toiChatShell().start()

@@ -39,8 +39,19 @@ class toiChatter():
         self.recipient = recipient
 
     def startInstantMessage(self):
-        print('-'*78)
-        print("\nStart Chatting with : '" + str(self.recipient) + "'.\n")
+        # Clear the console
+        #
+        print(chr(27) + "[2J") 
+
+        # Print connection info
+        #
+        print("Start Chatting with : '" + str(self.recipient) + "'.\n" + 
+            "(Escape Sequence: Ctrl+c)")
+        
+        # Print line separator
+        #
+        print('-'*78 + "\n")
+
         while True:
             # Wait for the user to send a message or keyboard interrupt
             #
