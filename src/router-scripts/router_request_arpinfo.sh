@@ -18,7 +18,10 @@ sendMsg="toi-chatTx myIP=($myIP)"
 #
 for i in $( arp -i wl0 | grep -oE '\(([^)]+)\)' | tr -d '()' );
 do
-    echo $sendMsg | nc $i $toiPort
+    rtrn=$( { echo $sendMsg | nc $i $toiPort; } 2>&1 )
+    if [ -z "$rtrn" ]
+    then
         rx="$(nc -lp $toiPort2)" 
-    echo $rx
+        echo $rx
+    fi
 done
