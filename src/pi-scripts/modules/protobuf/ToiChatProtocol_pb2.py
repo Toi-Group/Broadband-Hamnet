@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='ToiChatProtocol.proto',
   package='ToiChatProtocol',
-  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"\x8c\x02\n\nDnsMessage\x12\x0f\n\x07\x63ommand\x18\x01 \x02(\t\x12\x12\n\nclientName\x18\x02 \x02(\t\x12\x10\n\x08\x63lientId\x18\x03 \x02(\t\x12\x11\n\tdateAdded\x18\x04 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x05 \x01(\t:\x04NONE\x12\x37\n\x07\x63lients\x18\x06 \x03(\x0b\x32&.ToiChatProtocol.DnsMessage.DNSClients\x1a`\n\nDNSClients\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\t\x12\x11\n\tdateAdded\x18\x03 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"\x19\n\x0b\x43hatMessage\x12\n\n\x02id\x18\x01 \x02(\t')
+  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"`\n\nIdentifier\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\t\x12\x11\n\tdateAdded\x18\x03 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"t\n\nDnsMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x0f\n\x07\x63ommand\x18\x02 \x02(\t\x12,\n\x07\x63lients\x18\x03 \x03(\x0b\x32\x1b.ToiChatProtocol.Identifier\"_\n\x0b\x43hatMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x12\n\nrecipients\x18\x02 \x03(\t\x12\x13\n\x0btextMessage\x18\x03 \x02(\t')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -65,36 +65,36 @@ _TOICHATMESSAGE = _descriptor.Descriptor(
 )
 
 
-_DNSMESSAGE_DNSCLIENTS = _descriptor.Descriptor(
-  name='DNSClients',
-  full_name='ToiChatProtocol.DnsMessage.DNSClients',
+_IDENTIFIER = _descriptor.Descriptor(
+  name='Identifier',
+  full_name='ToiChatProtocol.Identifier',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='clientName', full_name='ToiChatProtocol.DnsMessage.DNSClients.clientName', index=0,
+      name='clientName', full_name='ToiChatProtocol.Identifier.clientName', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='clientId', full_name='ToiChatProtocol.DnsMessage.DNSClients.clientId', index=1,
+      name='clientId', full_name='ToiChatProtocol.Identifier.clientId', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dateAdded', full_name='ToiChatProtocol.DnsMessage.DNSClients.dateAdded', index=2,
+      name='dateAdded', full_name='ToiChatProtocol.Identifier.dateAdded', index=2,
       number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='description', full_name='ToiChatProtocol.DnsMessage.DNSClients.description', index=3,
+      name='description', full_name='ToiChatProtocol.Identifier.description', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=True, default_value=_b("NONE").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -111,9 +111,10 @@ _DNSMESSAGE_DNSCLIENTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=353,
-  serialized_end=449,
+  serialized_start=180,
+  serialized_end=276,
 )
+
 
 _DNSMESSAGE = _descriptor.Descriptor(
   name='DnsMessage',
@@ -123,43 +124,22 @@ _DNSMESSAGE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='command', full_name='ToiChatProtocol.DnsMessage.command', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='id', full_name='ToiChatProtocol.DnsMessage.id', index=0,
+      number=1, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='clientName', full_name='ToiChatProtocol.DnsMessage.clientName', index=1,
+      name='command', full_name='ToiChatProtocol.DnsMessage.command', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='clientId', full_name='ToiChatProtocol.DnsMessage.clientId', index=2,
-      number=3, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='dateAdded', full_name='ToiChatProtocol.DnsMessage.dateAdded', index=3,
-      number=4, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='description', full_name='ToiChatProtocol.DnsMessage.description', index=4,
-      number=5, type=9, cpp_type=9, label=1,
-      has_default_value=True, default_value=_b("NONE").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='clients', full_name='ToiChatProtocol.DnsMessage.clients', index=5,
-      number=6, type=11, cpp_type=10, label=3,
+      name='clients', full_name='ToiChatProtocol.DnsMessage.clients', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -167,7 +147,7 @@ _DNSMESSAGE = _descriptor.Descriptor(
   ],
   extensions=[
   ],
-  nested_types=[_DNSMESSAGE_DNSCLIENTS, ],
+  nested_types=[],
   enum_types=[
   ],
   options=None,
@@ -175,8 +155,8 @@ _DNSMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=181,
-  serialized_end=449,
+  serialized_start=278,
+  serialized_end=394,
 )
 
 
@@ -189,7 +169,21 @@ _CHATMESSAGE = _descriptor.Descriptor(
   fields=[
     _descriptor.FieldDescriptor(
       name='id', full_name='ToiChatProtocol.ChatMessage.id', index=0,
-      number=1, type=9, cpp_type=9, label=2,
+      number=1, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='recipients', full_name='ToiChatProtocol.ChatMessage.recipients', index=1,
+      number=2, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='textMessage', full_name='ToiChatProtocol.ChatMessage.textMessage', index=2,
+      number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -205,8 +199,8 @@ _CHATMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=451,
-  serialized_end=476,
+  serialized_start=396,
+  serialized_end=491,
 )
 
 _TOICHATMESSAGE.fields_by_name['dnsMessage'].message_type = _DNSMESSAGE
@@ -217,9 +211,11 @@ _TOICHATMESSAGE.fields_by_name['dnsMessage'].containing_oneof = _TOICHATMESSAGE.
 _TOICHATMESSAGE.oneofs_by_name['messageType'].fields.append(
   _TOICHATMESSAGE.fields_by_name['chatMessage'])
 _TOICHATMESSAGE.fields_by_name['chatMessage'].containing_oneof = _TOICHATMESSAGE.oneofs_by_name['messageType']
-_DNSMESSAGE_DNSCLIENTS.containing_type = _DNSMESSAGE
-_DNSMESSAGE.fields_by_name['clients'].message_type = _DNSMESSAGE_DNSCLIENTS
+_DNSMESSAGE.fields_by_name['id'].message_type = _IDENTIFIER
+_DNSMESSAGE.fields_by_name['clients'].message_type = _IDENTIFIER
+_CHATMESSAGE.fields_by_name['id'].message_type = _IDENTIFIER
 DESCRIPTOR.message_types_by_name['ToiChatMessage'] = _TOICHATMESSAGE
+DESCRIPTOR.message_types_by_name['Identifier'] = _IDENTIFIER
 DESCRIPTOR.message_types_by_name['DnsMessage'] = _DNSMESSAGE
 DESCRIPTOR.message_types_by_name['ChatMessage'] = _CHATMESSAGE
 
@@ -230,20 +226,19 @@ ToiChatMessage = _reflection.GeneratedProtocolMessageType('ToiChatMessage', (_me
   ))
 _sym_db.RegisterMessage(ToiChatMessage)
 
-DnsMessage = _reflection.GeneratedProtocolMessageType('DnsMessage', (_message.Message,), dict(
+Identifier = _reflection.GeneratedProtocolMessageType('Identifier', (_message.Message,), dict(
+  DESCRIPTOR = _IDENTIFIER,
+  __module__ = 'ToiChatProtocol_pb2'
+  # @@protoc_insertion_point(class_scope:ToiChatProtocol.Identifier)
+  ))
+_sym_db.RegisterMessage(Identifier)
 
-  DNSClients = _reflection.GeneratedProtocolMessageType('DNSClients', (_message.Message,), dict(
-    DESCRIPTOR = _DNSMESSAGE_DNSCLIENTS,
-    __module__ = 'ToiChatProtocol_pb2'
-    # @@protoc_insertion_point(class_scope:ToiChatProtocol.DnsMessage.DNSClients)
-    ))
-  ,
+DnsMessage = _reflection.GeneratedProtocolMessageType('DnsMessage', (_message.Message,), dict(
   DESCRIPTOR = _DNSMESSAGE,
   __module__ = 'ToiChatProtocol_pb2'
   # @@protoc_insertion_point(class_scope:ToiChatProtocol.DnsMessage)
   ))
 _sym_db.RegisterMessage(DnsMessage)
-_sym_db.RegisterMessage(DnsMessage.DNSClients)
 
 ChatMessage = _reflection.GeneratedProtocolMessageType('ChatMessage', (_message.Message,), dict(
   DESCRIPTOR = _CHATMESSAGE,

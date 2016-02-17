@@ -20,6 +20,7 @@ import queue # Used for communication between server listener, receiver,
 import struct, sys # Used for finding the full message length of a received
                    # message.
 import time # Used for cataloging the date in server logs.
+import readline # Used for reading in stdout to print to console now.
 
 # ToiChatServer listener and ToiChatMessage handler
 #
@@ -42,19 +43,23 @@ class toiChatServer():
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, xtoiChatNameServer, xPORT_TOICHAT=5005, \
-        xlogFileName = 'toiChatServer.log'):
+    def __init__(self, toiChatNameServer, PORT_TOICHAT=5005, \
+        logFileName = 'toiChatServer.log'):
         # Filename where should we save server logs to
         #
-        self.logFileName = xlogFileName
+        self.logFileName = logFileName
 
         # Store ToiChatNameServer to use
         #
-        self.myToiChatNameServer = xtoiChatNameServer
+        self.myToiChatNameServer = toiChatNameServer
 
         # Define port ToiChat uses to communicate
         #
-        self.PORT_TOICHAT = xPORT_TOICHAT;
+        self.PORT_TOICHAT = PORT_TOICHAT;
+
+        # Handle multiple chat instances
+        #
+        self.myToiChatters = []
 
         # Server is by default set to disabled
         #
@@ -67,6 +72,10 @@ class toiChatServer():
         # Create a print to file queue
         #
         self.printQueue = queue.Queue()
+
+        # Create a print to stdout Now queue
+        #
+        self.printQueueNow = queue.Queue()
 
         # Create the client recv connection handler thread
         #
@@ -82,6 +91,11 @@ class toiChatServer():
         self.W.daemon = True
         self.W.start()
 
+        # Print server output to user Now thread
+        #
+        self.N = Thread(target=self.__printToUserNow__)
+        self.N.daemon = True
+        self.N.start()
     
     # -- START CLASS DESTRUCTOR -- 
     #
@@ -174,14 +188,6 @@ class toiChatServer():
         self.printQueue.put("Attempting to stop ToiChat server...")
 
         if (self.S.is_alive() == True):
-            # Stop the communicateQueue thread handler 
-            # 
-            self.communicateQueue.put([None, self.CONST_EXIT_QUEUE])
-            # Wait for server thread to close
-            #
-            self.S.join(3.0)
-        
-        if (self.C.is_alive() == True):
             # Tell the server listener thread to break accepting connections
             #
             self.stopServerVar = True
@@ -195,12 +201,21 @@ class toiChatServer():
 
             # Wait for server thread to close
             #
+            self.S.join(3.0)
+        
+        if (self.C.is_alive() == True):
+            # Stop the communicateQueue thread handler 
+            # 
+            self.communicateQueue.put([None, self.CONST_EXIT_QUEUE])
+            
+            # Wait for server thread to close
+            #
             self.C.join(3.0)
 
         # Determine if server listener thread stopped correctly
         #
         if (self.S.is_alive() == True and self.C.is_alive() == False):
-            self.printQueue.put("Attempt to stop server failed.\n")
+            self.printQueue.put("Attempt to stop server listener failed.\n")
             del self.C
             # Create the communication handler thread
             #
@@ -211,7 +226,7 @@ class toiChatServer():
             return 0
         elif (self.S.is_alive() == False and self.C.is_alive == True):
             del self.S
-            self.printQueue.put("Attempt to stop server failed.\n")
+            self.printQueue.put("Attempt to stop message handler failed.\n")
             # Create the client recv connection handler thread
             #
             self.S = Thread(target=self.__toiChatListener__)
@@ -220,7 +235,6 @@ class toiChatServer():
             self.startServer()
             return 0
         self.printQueue.put("Attempt to stop server was successful!\n")
-
         # Create new instances of the threads
         del self.C
         del self.S
@@ -262,16 +276,51 @@ class toiChatServer():
     #   - Returns true if server is running else fase.
     #
     # -- END FUNCTION DESCR -- 
-    def updateServerPort(self, xPORT_TOICHAT=5005):
+    def updateServerPort(self, PORT_TOICHAT=5005):
         # Define port ToiChat uses to communicate
         #
-        self.PORT_TOICHAT = xPORT_TOICHAT
+        self.PORT_TOICHAT = PORT_TOICHAT
         
         # Print that we are restarting the server
         #
         self.printQueue.put("We are restarting the server threads...")
         self.stopServer()
         self.startServer()
+        return 1
+
+    # -- START FUNCTION DESCR --
+    #
+    # Update Chat Message Handler array
+    #
+    # Inputs:
+    #   A toiChatter Instance
+    #
+    # Outputs:
+    #   Updated internal toiChatter handler with inputted toiChatter Instance
+    #   added to handler array
+    #
+    # -- END FUNCTION DESCR --
+    def addToiChatter(self, toiChatter):
+        self.myToiChatters.append(toiChatter)
+        return 1
+
+    # -- START FUNCTION DESCR --
+    #
+    # Update Chat Message Handler array
+    #
+    # Inputs:
+    #   A toiChatter Instance
+    #
+    # Outputs:
+    #   Updated internal toiChatter handler with inputted toiChatter Instance
+    #   removed from handler array
+    #
+    # -- END FUNCTION DESCR --
+    def removeToiChatter(self, toiChatter):
+        try:
+            self.myToiChatters.remove(toiChatter)
+        except ValueError:
+            pass
         return 1
 
     # --------------------------------------------------------------------
@@ -299,6 +348,12 @@ class toiChatServer():
         # designated port
         #
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as serverSock:
+            # Set socket lifetime after close to none
+            #
+            # See http://stackoverflow.com/questions/4465959/python-errno-98-address-already-in-use
+            serverSock.setsockopt(socket.SOL_SOCKET, \
+                socket.SO_REUSEADDR, 1)
+
             # Bind to localhost on PORT_TOICHAT 
             #
             serverSock.bind(SERVER)
@@ -463,14 +518,32 @@ class toiChatServer():
             decodeDnsMsg = decodedToiMessage.dnsMessage
             self.printQueue.put(decodeDnsMsg)
             self.myToiChatNameServer.handleDnsMessage(decodeDnsMsg)
+            return 1
         elif msgType == self.getType[1]:
             decodeChatMsg = ToiChatProtocol_pb2.ChatMessage()
             decodeChatMsg = decodedToiMessage.chatMessage
-            #handleChatMessage(decodeChatMsg)
-        else:
-            self.printQueue.put("Unknown MsgItem Type. '" + msgType + "'")
-            return 0
-        return 1
+            # We check what toiChatter message belongs to
+            #
+            if self.myToiChatters:
+                # Loop over each toiChatter the server has access to
+                #
+                for chatter in self.myToiChatters:
+                    # Check to see if chatter recipient matches sender id
+                    #
+                    if chatter.getRecipient() == \
+                        str(decodeChatMsg.id.clientName):
+                        chatter.handleChatMessage(decodeChatMsg)
+                return 1
+                # If after loop we still don't know who message is from
+                # prompt user that he has a new message
+                #
+            self.printQueueNow.put("You have a new message from : " + \
+                str(decodeChatMsg.id.clientName) + ". Open a chat " + \
+                "window to talk back.")
+            return 1
+        self.printQueue.put("Unable to Process Message of type. '" \
+            + msgType + "'")
+        return 0
 
     # -- START __FUNCTION DESCR --
     #
@@ -508,4 +581,42 @@ class toiChatServer():
             # Indicate we finished processing the enqueued print request
             #
             self.printQueue.task_done()
+        return 0
+
+    # -- START __FUNCTION DESCR --
+    #
+    # Processes print statement for server function and prints them
+    # to a file. 
+    #
+    # Inputs:
+    #   - A string seen on printQueueNow
+    #
+    # Outputs:
+    #  - Prints to stdout
+    #
+    # -- END FUNCTION DESCR --
+    def __printToUserNow__(self):
+        while True:
+            # Get an item to print
+            #
+            text = self.printQueueNow.get()
+
+            if text == self.CONST_EXIT_QUEUE:
+                self.printQueue.task_done()
+                break
+            # Erase the current stdout prompt but store it first
+            # 
+            sys.stdout.write('\r'+' '*(len(readline.get_line_buffer())+2)+'\r')
+            
+            # Print the message from the receiver
+            #
+            sys.stdout.write(text + "\n")
+
+            # Print the message that came before
+            #
+            sys.stdout.write(" >> " + readline.get_line_buffer())
+
+            # Indicate we finished processing the enqueued print request
+            #
+            self.printQueueNow.task_done()
         return 0
