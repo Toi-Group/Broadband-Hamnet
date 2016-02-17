@@ -3,6 +3,7 @@
 # Define port toi-chat uses to communicate between routers
 #
 toiPort=5005
+toiPort2=5006
 
 # Ensure no netcat ports are currently listening
 #
@@ -46,5 +47,5 @@ do
         
         # Output this routers ARP table to the requesting router
         #
-        arp -i eth0.0 | grep -oE '\(([^)]+)\)' | tr -d '()' | nc $rx_IP $toiPort
+        arp -i eth0.0 | grep -oE '\(([^)]+)\)' | tr -d '()' | nc $rx_IP $toiPort2
 done

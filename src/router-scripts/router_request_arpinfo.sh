@@ -3,6 +3,7 @@
 # Define port toi-chat uses to communicate between routers
 #
 toiPort=5005
+toiPort2=5006
 
 # Find the IP address of the local router
 #
@@ -18,6 +19,6 @@ sendMsg="toi-chatTx myIP=($myIP)"
 for i in $( arp -i wl0 | grep -oE '\(([^)]+)\)' | tr -d '()' );
 do
     echo $sendMsg | nc $i $toiPort
-        rx="$(nc -lp $toiPort)"
+        rx="$(nc -lp $toiPort2)" 
     echo $rx
 done
