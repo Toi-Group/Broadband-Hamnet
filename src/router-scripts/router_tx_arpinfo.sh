@@ -4,6 +4,26 @@
 #
 toiPort=5005
 
+# Ensure no netcat ports are currently listening
+#
+
+# Grep for the netcat port
+#
+grep_out="$(ps | grep 'nc -lp 5005')"
+
+# Did the process exist?
+#
+found="$(echo $grep_out | wc -l)"
+
+if [ $found = 1 ]
+then
+    #if the process existed, get the PID and kill the process
+    #
+    proc_ID="$(echo $grep_out | awk '{print $1;}')"
+    kill -9 $proc_ID
+    echo "Killed Process" $proc_ID
+fi
+
 # Loop forever (always be listening)
 while [ 1 ]
 do
