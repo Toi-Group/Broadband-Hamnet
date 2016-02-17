@@ -1,5 +1,5 @@
 # Broadband-Hamnet Chat Software
-v0.3
+v0.4
 
 This is a Temple EE Senior Project 2016. 
 Official Project Website: https://sites.google.com/a/temple.edu/broadband-mcomm/
