@@ -101,7 +101,7 @@ class toiChatShell(cmd.Cmd):
         return
 
     def do_bye(self, arg):
-        'Stop recording, close the toiChat shell, and exit: BYE'
+        'Close the toiChat shell, and exit program.'
         if self.myToiChatServer.statusServer() == True:
             print("Toi-Chat server is running in the " + \
                 "background.\n")
@@ -115,15 +115,6 @@ class toiChatShell(cmd.Cmd):
         
 
     # ----- record and playback -----
-    def do_record(self, arg):
-        'Save future commands to filename:  RECORD myToiChatPref.cmd'
-        self.myFile = open(arg, 'w')
-    def do_playback(self, arg):
-        'Playback commands from a file:  PLAYBACK myToiChatPref.cmd'
-        self.close()
-        with open(arg) as f:
-            self.cmdqueue.extend(f.read().splitlines())
-
     def precmd(self, line):
         line = line.lower()
         if self.myFile and 'playback' not in line:
@@ -140,13 +131,18 @@ class toiChatShell(cmd.Cmd):
             # Initialize client, server and name-server
             # Prompt user for their unique name input
             #
-            try:
-                callSign = str(input("What is your host-name " + \
-                    "(call sign)?:\n >>  ")).lower()
-            except KeyboardInterrupt:
-                self.close()
-                print('\nThank you for using TOIChat!')
-                return True
+            while True:
+                try:
+                    callSign = str(input("What is your host-name " + \
+                        "(call sign)?:\n >>  ")).lower()
+                except KeyboardInterrupt:
+                    self.close()
+                    print('\nThank you for using TOIChat!')
+                    return True
+                if not callSign == "":
+                    break
+                else:
+                    print("Error: You need to enter a call sign.")
             # Prompt user for call sign input
             #
             yesNoReponse = self.askYesNo("Do you want to register any misc " + \

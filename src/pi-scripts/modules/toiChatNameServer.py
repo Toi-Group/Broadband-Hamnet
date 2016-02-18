@@ -31,7 +31,7 @@ from modules.txArpInfo import txArpInfo # Used for instructing the router
                                         # to listen for incoming requests.
 from modules.toiChatPing import * # Used for pinging machines in
                                             # the network.
-
+import readline # Used for reading in stdout to print to console now.
 
 class toiChatNameServer():
     # Types of commands to expect
@@ -40,7 +40,7 @@ class toiChatNameServer():
         0:"register",
         1:"request"
     }
-    DNS_PING_INTERVAL = 250 # In seconds
+    DNS_PING_INTERVAL = 20 # In seconds
 
     # -- START CLASS CONSTRUCTOR -- 
     #
@@ -627,13 +627,12 @@ class toiChatNameServer():
         else: 
             # Delete all IPs we could not contact
             #
-            for clientIP in listToDelete:
+            for clientName in listToDelete:
                 # Print to log file we are removing a new entry
                 #
-                self.printQueue.put("Removing - '"  + \
-                    + str(self.lookupHostnameByIP(clientIP)) + \
-                    "' from " + "DNS table.")
-                del self.dns[clientIP]
+                self.printQueue.put("Removing - '" +\
+                    clientName +  "' from DNS table.")
+                del self.dns[clientName]
 
         # Release DNS table manipulation lock
         #

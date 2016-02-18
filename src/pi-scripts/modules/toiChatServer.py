@@ -413,7 +413,7 @@ class toiChatServer():
 
             # Print to log we are receiving a message
             #
-            self.printQueue.put("'" + str(addr) + "' - connected")
+            self.printQueue.put(str(addr) + " - connected")
             
             # Receive the first four bytes containing the length    
             # of the message
@@ -444,7 +444,7 @@ class toiChatServer():
 
             # Close socket to client. 
             #
-            self.printQueue.put("'" + str(addr) + "' - disconnected.")
+            self.printQueue.put(str(addr) + " - disconnected.")
             clientSock.close()
 
             # Indicate we finished processing the enqueued socket
@@ -505,7 +505,7 @@ class toiChatServer():
         #
         decodedToiMessage = ToiChatProtocol_pb2.ToiChatMessage()
 
-        self.printQueue.put(rawBuffer)
+        self.printQueue.put("RAW Received MSG = " + str(rawBuffer))
         # Decode the raw message 
         #
         decodedToiMessage.ParseFromString(rawBuffer)
@@ -516,12 +516,15 @@ class toiChatServer():
         if msgType == self.getType[0]:
             decodeDnsMsg = ToiChatProtocol_pb2.DnsMessage()
             decodeDnsMsg = decodedToiMessage.dnsMessage
-            self.printQueue.put(decodeDnsMsg)
+            self.printQueue.put("Decoded Received MSG = " + \
+                str(decodeDnsMsg))
             self.myToiChatNameServer.handleDnsMessage(decodeDnsMsg)
             return 1
         elif msgType == self.getType[1]:
             decodeChatMsg = ToiChatProtocol_pb2.ChatMessage()
             decodeChatMsg = decodedToiMessage.chatMessage
+            self.printQueue.put("Decoded Received MSG = " + \
+                str(decodeChatMsg))
             # We check what toiChatter message belongs to
             #
             if self.myToiChatters:
