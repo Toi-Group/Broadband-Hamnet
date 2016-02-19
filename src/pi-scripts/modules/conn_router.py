@@ -34,20 +34,23 @@ def conn_router(default_gateway):
     ssh = subprocess.Popen(['ssh', '-p', '2222', \
         'root@' + default_gateway,'sh ' + scriptPath], \
         shell=False, \
-        stdout=subprocess.PIPE,
+        stdout=subprocess.PIPE, \
         stderr=subprocess.PIPE)
  
-    # Take output of command and return
+    # Take output of command and return. 
     #
     nodes = ssh.communicate()[0]
     if len(nodes) < 7:
+<<<<<<< HEAD
 #        error = ssh.stderr.readlines()
+=======
+        #error = ssh.stderr.readlines()
+>>>>>>> dev
         return None 
     else:
         #Parse output to extract IPs of local machines
         #
-        nodes = str(nodes).split('\\n')
-        IPs = str(nodes[1]).split()
+        IPs = nodes.decode('ascii').split('\\n')
 
         # Check if IPs are valid IPv4 addresses
         #
@@ -57,14 +60,16 @@ def conn_router(default_gateway):
                 socket.inet_aton(TCP_IP)
             except socket.error:
                 pass
+
             # If valid add it to the array
             #
             valid_IPs.append(TCP_IP)
+
         # Check if we have any valid IPs. Return None if we don't
         #
         if valid_IPs == []:
             return None
-    
     #Return a list of IPs found on the mesh network
     #
     return valid_IPs
+

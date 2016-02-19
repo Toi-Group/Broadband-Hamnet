@@ -13,24 +13,24 @@ message ToiChatMessage {
     }
 }
 
-message DnsMessage {
+message Identifier {
     // Gather message about client sending a new message
     //
-    required string command = 1;
-    required string clientName = 2; // Hostname/CallSign
-    required string clientId = 3; // IPaddress
-    required string lastUpdate = 4;
-    optional string description = 5 [default = "NONE"]; // Misc Info.
-    message DNSClients {
-        required string clientName = 6; // Hostname/CallSign
-        required string clientId = 7; // IPaddress
-        required string lastUpdate = 8;
-        optional string description = 9 [default = "NONE"]; // Misc Info.
-    }
-    repeated DNSClients clients = 6;
+    required string clientName = 1; // Hostname/CallSign
+    required string clientId = 2; // IPaddress
+    required string dateAdded = 3;
+    optional string description = 4 [default = "NONE"]; // Misc Info.
+}
+
+message DnsMessage {
+    required Identifier id = 1;
+    required string command = 2;
+    repeated Identifier clients = 3;
 }
 
 message ChatMessage {
-    required string id = 1;
+    required Identifier id = 1;
+    repeated string recipients = 2;
+    required string textMessage = 3;
 }
 
