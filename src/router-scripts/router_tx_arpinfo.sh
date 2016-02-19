@@ -10,16 +10,17 @@ toiPort2=5006
 
 # Grep for the netcat port
 #
-grep_out="$(ps | grep 'nc -lp 5005')"
+found="$(ps | grep '[n]c -lp 5005 | wc -l')"
 
 # Did the process exist?
 #
-found="$(echo $grep_out | wc -l)"
 
-if [ $found = 1 ]
+
+if [ $found -eq 1 ]
 then
     #if the process existed, get the PID and kill the process
     #
+    grep_out="$(ps | grep '[n]c -lp 5005')"
     proc_ID="$(echo $grep_out | awk '{print $1;}')"
     kill -9 $proc_ID
     echo "Killed Process" $proc_ID
