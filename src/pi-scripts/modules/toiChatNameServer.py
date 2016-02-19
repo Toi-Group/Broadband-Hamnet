@@ -27,8 +27,6 @@ from modules.conn_router import conn_router # Used for sending a request
 from modules.gatewayIP import gatewayIP # Used for finding the address
                                         # of the local broadband hamnet
                                         # router
-from modules.txArpInfo import txArpInfo # Used for instructing the router 
-                                        # to listen for incoming requests.
 from modules.toiChatPing import * # Used for pinging machines in
                                             # the network.
 import readline # Used for reading in stdout to print to console now.
