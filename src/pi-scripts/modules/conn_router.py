@@ -18,7 +18,7 @@ import subprocess # Used for running shell commands
 #  - IPs = returns the IPv4 addresses of nodes found on the mesh network in a list.
 #
 # -- END FUNCTION DESCR -- 
-def conn_router(default_gateway):
+def conn_router(default_gateway, user_pwd):
     # Directory with router scripts
     #
     scriptPath = 'router_request_arpinfo.sh'
@@ -31,7 +31,8 @@ def conn_router(default_gateway):
 
     # Construct ssh command to run 'router_request_arpinf.sh' script
     #
-    ssh = subprocess.Popen(['ssh', '-p', '2222', \
+    ssh = subprocess.Popen(['sshpass', '-p', user_pwd, \
+        'ssh', '-p', '2222', \
         'root@' + default_gateway,'sh ' + scriptPath], \
         shell=False, \
         stdout=subprocess.PIPE, \
