@@ -9,13 +9,13 @@ def listen_router(user_pwd):
     # 
     default_gateway = gatewayIP()
 
-    scriptPath = "../etc/router_tx_arpinfo.sh &"
+    scriptPath = "../etc/router_tx_arpinfo.sh"
 
     # Run '../router-scripts/router_tx_arpinf.sh' on local router
     #
     ssh = subprocess.Popen(['sshpass', '-p', user_pwd, \
         'ssh', '-p', '2222', \
-        'root@' + default_gateway, "sh "  + scriptPath], \
+        'root@' + default_gateway, "sh "  + scriptPath, '&'], \
         shell=False, \
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)

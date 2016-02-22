@@ -21,7 +21,7 @@ import subprocess # Used for running shell commands
 def conn_router(default_gateway, user_pwd):
     # Directory with router scripts
     #
-    scriptPath = 'router_request_arpinfo.sh'
+    scriptPath = '../etc/router_request_arpinfo.sh'
 
     # Try to open 'router_request_arpinf.sh'
     #

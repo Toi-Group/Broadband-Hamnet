@@ -21,8 +21,6 @@ import struct, sys # Used for finding the full message length of a received
                    # message.
 import time # Used for cataloging the date in server logs.
 import readline # Used for reading in stdout to print to console now.
-from modules.txArpInfo import txArpInfo # Used for instructing the router 
-                                        # to listen for incoming requests.
 
 # ToiChatServer listener and ToiChatMessage handler
 #
@@ -121,9 +119,6 @@ class toiChatServer():
     #
     # -- END FUNCTION DESCR -- 
     def startServer(self):
-        # Start router listening for ARP info requests.
-        #
-        txArpInfo()
 
         self.stopServerVar = False
         # Check to see if printer thread has already started
