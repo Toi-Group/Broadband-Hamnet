@@ -119,6 +119,7 @@ class toiChatServer():
     #
     # -- END FUNCTION DESCR -- 
     def startServer(self):
+
         self.stopServerVar = False
         # Check to see if printer thread has already started
         #

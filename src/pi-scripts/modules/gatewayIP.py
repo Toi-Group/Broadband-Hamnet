@@ -20,7 +20,7 @@ def gatewayIP():
     route = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     routerIP = route.communicate()[0]
     routerIP = str(routerIP).split()
-    print("Default Gateway Found: \n\t" + routerIP[1])
+#    print("Default Gateway Found: \n\t" + routerIP[1])
     return routerIP[1]
 
 
