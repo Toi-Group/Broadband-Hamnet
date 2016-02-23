@@ -10,20 +10,25 @@ toiPort2=5006
 
 # Grep for the netcat port
 #
-found="$(ps | grep '[n]c -lp 5005 | wc -l')"
-
+foundchild="$(ps | grep '[n]c -lp 5005' | wc -l)"
+foundparent="$(ps | grep '[s]h router_tx_arpinfo.sh' | wc -l)" 
 # Did the process exist?
 #
 
+if [ $foundparent -eq 1 ]
+then
+    grep_out1="$(ps | grep '[s]h router_tx_arpinfo.sh')"
+    proc_ID="$(echo $grep_out1 | awk '{print $1;}')"
+    kill -9 $proc_ID
+fi
 
-if [ $found -eq 1 ]
+if [ $foundchild -eq 1 ]
 then
     #if the process existed, get the PID and kill the process
     #
     grep_out="$(ps | grep '[n]c -lp 5005')"
     proc_ID="$(echo $grep_out | awk '{print $1;}')"
     kill -9 $proc_ID
-    echo "Killed Process" $proc_ID
 fi
 
 # Loop forever (always be listening)
@@ -33,10 +38,6 @@ do
     #
     rx_mess="$(nc -lp $toiPort)"
     
-    # Debug print send message
-    #
-    echo $rx_mess
-
     # Check if message is from TOI-Chat
     #
     val="$(echo $rx_mess | grep "toi-chatTx" | wc -l)"
@@ -49,4 +50,5 @@ do
         # Output this routers ARP table to the requesting router
         #
         arp -i eth0.0 | grep -oE '\(([^)]+)\)' | tr -d '()' | nc $rx_IP $toiPort2
+    fi
 done
