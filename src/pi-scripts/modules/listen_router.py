@@ -1,37 +1,21 @@
 # Import Modules
 import os, sys
 import subprocess
+from modules.gatewayIP import gatewayIP
 
-def listen_router(default_gateway):
-    # Find directory with router scripts
-    #
-    scriptPath = os.path.join(os.path.join( \
-        os.path.dirname(os.path.dirname(os.path.dirname( \
-        os.path.dirname(os.path.dirname(
-        os.path.abspath(__file__)))))), \
-        "router-scripts"), \
-        'router_tx_arpinfo.sh')
 
-    # Try to open 'router_request_arpinf.sh'
-    #
-    if (os.path.isfile(scriptPath) == False):
-        print('There was an error opening the file \''+scriptPath+'\'')
-        sys.exit(1)
+def listen_router(user_pwd):
+    # Find the default gateway
+    # 
+    default_gateway = gatewayIP()
 
-    # Construct ssh command to run 'router_tx_arpinf.sh' script
-    #command_line = "ssh -p 2222 root@" + default_gateway + \
-    #    " 'sh' < " + scriptPath
-    
-    # Run '../router-scripts/router_request_arpinf.sh' on local router
+    scriptPath = "../etc/router_tx_arpinfo.sh"
+
+    # Run '../router-scripts/router_tx_arpinf.sh' on local router
     #
-    print(scriptPath)
-    # ssh = subprocess.Popen(['ssh', '-p', '2222', \
-    #     'root@' + default_gateway, "'sh'", "<", scriptPath], \
-    #     shell=True,
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.PIPE)
-    ssh = subprocess.Popen(['ssh', '-p', '2222', \
-        'root@' + default_gateway, "'sh '" + scriptPath], \
+    ssh = subprocess.Popen(['sshpass', '-p', user_pwd, \
+        'ssh', '-p', '2222', \
+        'root@' + default_gateway, "sh "  + scriptPath, '&'], \
         shell=False, \
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)

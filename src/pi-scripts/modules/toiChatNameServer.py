@@ -10,6 +10,10 @@
 # Author: Toi-Group
 #
 
+
+from modules.testSSH import testSSH # Used to automate SSH login
+from modules.listen_router import listen_router # Used for accepting ARP
+                                                # requests
 from modules.protobuf import ToiChatProtocol_pb2 # Used for DnsMessage 
                                                  # Protocol
 from modules.toiChatClient import toiChatClient # Used for replying to 
@@ -27,8 +31,6 @@ from modules.conn_router import conn_router # Used for sending a request
 from modules.gatewayIP import gatewayIP # Used for finding the address
                                         # of the local broadband hamnet
                                         # router
-from modules.txArpInfo import txArpInfo # Used for instructing the router 
-                                        # to listen for incoming requests.
 from modules.toiChatPing import * # Used for pinging machines in
                                             # the network.
 import readline # Used for reading in stdout to print to console now.
@@ -65,6 +67,14 @@ class toiChatNameServer():
         self.W.daemon = True
         self.W.start()
 
+        # Prompt for Router's root password
+        #
+        self.user_pwd = testSSH()
+
+        # Make router listen for ARP requests
+        #
+        listen_router(self.user_pwd)    
+    
         # Store ToiChatClient to used to send dns messages
         #
         self.myToiChatClient = toiChatClient
@@ -305,7 +315,7 @@ class toiChatNameServer():
     def attemptFindServer(self, toiServerPORT=5005):
         # Get a list of IPs running Toi-Chat software on the mesh network
         #
-        listIPs = conn_router(gatewayIP())
+        listIPs = conn_router(gatewayIP(), self.user_pwd)
         # Check to see if there are any IPs in the returned ARP list
         #
         if listIPs == None:
