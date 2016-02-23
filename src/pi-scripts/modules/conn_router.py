@@ -31,9 +31,8 @@ def conn_router(default_gateway, user_pwd):
 
     # Construct ssh command to run 'router_request_arpinf.sh' script
     #
-    ssh = subprocess.Popen(['sshpass', '-p', user_pwd, \
-        'ssh', '-p', '2222', \
-        'root@' + default_gateway,'sh ' + scriptPath], \
+    ssh = subprocess.Popen(['sshpass', '-p', user_pwd, 'ssh', '-p', '2222', \
+        'root@' + default_gateway,"sh " + scriptPath], \
         shell=False, \
         stdout=subprocess.PIPE, \
         stderr=subprocess.PIPE)
@@ -41,6 +40,7 @@ def conn_router(default_gateway, user_pwd):
     # Take output of command and return. 
     #
     nodes = ssh.communicate()[0]
+    print(nodes)
     if len(nodes) < 7:
         # error = ssh.stderr.readlines()
         return None 
@@ -48,7 +48,9 @@ def conn_router(default_gateway, user_pwd):
         #Parse output to extract IPs of local machines
         #
         IPs = nodes.decode('ascii').split('\\n')
+        print(IPs)
 
+  
         # Check if IPs are valid IPv4 addresses
         #
         valid_IPs = []
@@ -68,5 +70,6 @@ def conn_router(default_gateway, user_pwd):
             return None
     #Return a list of IPs found on the mesh network
     #
+    print(valid_IPs[0])
     return valid_IPs
 
