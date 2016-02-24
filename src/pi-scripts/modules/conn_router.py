@@ -48,9 +48,7 @@ def conn_router(default_gateway, user_pwd):
         #Parse output to extract IPs of local machines
         #
         IPs = nodes.decode('ascii').split('\\n')
-        print(IPs)
 
-  
         # Check if IPs are valid IPv4 addresses
         #
         valid_IPs = []
@@ -70,6 +68,5 @@ def conn_router(default_gateway, user_pwd):
             return None
     #Return a list of IPs found on the mesh network
     #
-    print(valid_IPs[0])
     return valid_IPs
 

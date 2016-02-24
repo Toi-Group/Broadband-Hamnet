@@ -28,7 +28,7 @@ class toiChatShell(cmd.Cmd):
         if yesNoReponse == None:
             return
         if yesNoReponse == True:
-            self.myToiChatServer.startServer(askForValidPort())
+            self.myToiChatServer.startServer(self.askForValidPort())
         self.myToiChatServer.startServer()
 
     def do_forceupdatedns(self, arg):
@@ -42,7 +42,7 @@ class toiChatShell(cmd.Cmd):
         if yesNoReponse == None:
             return
         if yesNoReponse == True:
-            self.myNameServer.attemptFindServer(askForValidPort())
+            self.myNameServer.attemptFindServer(self.askForValidPort())
         if self.myNameServer.attemptFindServer()== True:
             print("Connection to a toiChatNetwork successful.")
             return
@@ -98,6 +98,7 @@ class toiChatShell(cmd.Cmd):
         self.myToiChatter = toiChatter(self.myToiChatClient, recipient)
         self.myToiChatServer.addToiChatter(self.myToiChatter)
         self.myToiChatter.startInstantMessage()
+        self.myToiChatServer.removeToiChatter(self.myToiChatter)
         return
 
     def do_bye(self, arg):

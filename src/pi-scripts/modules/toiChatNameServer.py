@@ -585,7 +585,7 @@ class toiChatNameServer():
             if self.stopDNSPing == True:
                 # Log we quit pinging
                 #
-                self.printQueue("Pinging stopped due to interrupt.")
+                self.printQueue.put("Pinging stopped due to interrupt.")
                 # Check to see if we should quit pinging
                 #
                 break
