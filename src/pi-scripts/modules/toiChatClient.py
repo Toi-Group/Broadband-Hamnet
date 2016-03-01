@@ -13,6 +13,7 @@ from modules.protobuf import ToiChatProtocol_pb2 # Used for encoding
 import socket # Used for sending information to a server
 import struct, sys # Used to append the length of a message to the beginning
                    # of the message
+import logging
 
 # toiChatClient sends messages to a toiChatServer in network
 #
@@ -30,6 +31,10 @@ class toiChatClient():
     #
     # -- END CLASS CONSTRUCTOR -- 
     def __init__(self, xHostname, xDescription="", xtoiChatNameServer=None):
+        # Logging instance where should we save client logs to
+        #
+        self.logger = logging.getLogger(__name__)
+
         # Populate the client information
         #
         self.myName = xHostname
@@ -116,7 +121,7 @@ class toiChatClient():
     #
     # -- END FUNCTION DESCR -- 
     def sendMessage(self, toiServerIP, decodedToiMessage, \
-        toiServerPORT=5005):
+        toiServerPORT=5005):        
         # Create a new socket to the server
         #
         serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,6 +153,11 @@ class toiChatClient():
         # Close socket to server
         #
         serverSock.close()
+
+        # Log successful send message event
+        #
+        self.logger.info("Message sent to ('" + str(toiServerIP) + \
+            "', " + str(toiServerPORT) + ").")
         return 1
 
     # -- START FUNCTION DESCR --

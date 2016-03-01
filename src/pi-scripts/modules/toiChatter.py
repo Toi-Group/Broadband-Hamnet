@@ -13,8 +13,8 @@ from modules.protobuf import ToiChatProtocol_pb2 # Used for ChatMessage
                                                  # Protocol
 from modules.toiChatClient import toiChatClient # Used for replying to 
                                                 # received messages
-import sys, readline # Used for overwriting current stdout line
-
+import sys, readline, struct,fcntl,termios # Used for overwriting current 
+                                           # stdout line
 class toiChatter():
 
     # Types of messages to expect as defined in ToiChatProtocol
@@ -59,10 +59,32 @@ class toiChatter():
                 message = input(" >> ")
             except KeyboardInterrupt:
                 break
-            # Erase the current stdout prompt
+            # Following lines sourced from stackoverflow
             #
-            sys.stdout.write("\033[F") # Move up cursor to previous line
-            sys.stdout.write("\033[K") # Clear the current line
+            # http://stackoverflow.com/questions/2082387/reading-input-from-raw-input-without-having-the-prompt-overwritten-by-other-th
+            # Next line said to be reasonably portable for various Unixes
+            (rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, \
+                termios.TIOCGWINSZ,'1234'))
+
+            text_len = len(message)+2
+
+            # ANSI escape sequences (All VT100 except ESC[0G)
+            # Move up cursor to previous line
+            #
+            sys.stdout.write("\033[F")
+
+            # Clear current line
+            #
+            sys.stdout.write('\x1b[2K') 
+
+            # Move cursor up and clear line
+            #
+            sys.stdout.write('\x1b[1A\x1b[2K'*int(text_len/cols))
+            
+            # Move to start of line
+            #
+            sys.stdout.write('\x1b[0G')
+            sys.stdout.flush()
 
             # Print message you sent to the console
             #
@@ -80,19 +102,36 @@ class toiChatter():
     # Handle a message from a client
     #
     def handleChatMessage(self, myChatMessage):
-        # Erase the current stdout prompt but store it first
-        # 
-        sys.stdout.write('\r'+' '*(len(readline.get_line_buffer())+2)+'\r')
-
-        # Print the message from the receiver
+        # Following lines sourced from stackoverflow
         #
-        sys.stdout.write(myChatMessage.id.clientName + ": " + \
-            myChatMessage.textMessage + "\n")
+        # http://stackoverflow.com/questions/2082387/reading-input-from-raw-input-without-having-the-prompt-overwritten-by-other-th
+        # Next line said to be reasonably portable for various Unixes
+        (rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
+
+        text_len = len(readline.get_line_buffer())+2
+
+        # ANSI escape sequences (All VT100 except ESC[0G)
+        # Clear current line
+        #
+        sys.stdout.write('\x1b[2K')
+
+        # Move to start of line
+        #
+        sys.stdout.write('\x1b[1A\x1b[2K'*int(text_len/cols))
+
+        # Move to start of line
+        #
+        sys.stdout.write('\x1b[0G')
+
+        # Print received message
+        #
+        print(myChatMessage.id.clientName + ": " + myChatMessage.textMessage)
 
         # Print the message that came before
         #
-        sys.stdout.write(" >> " + readline.get_line_buffer())
+        sys.stdout.write(' >> ' + readline.get_line_buffer())
         sys.stdout.flush()
+
         return 1
 
     # Return who this chatter's recipient currently is

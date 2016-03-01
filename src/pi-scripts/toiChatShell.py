@@ -10,12 +10,14 @@ from modules.toiChatClient import toiChatClient
 from modules.toiChatter import toiChatter
 from modules.toiChatNameServer import toiChatNameServer
 import cmd, sys, os
+import logging
+import argparse
 
 class toiChatShell(cmd.Cmd):
 
-    intro = "ToiChat - A Mesh Network optimized communication application."
+    intro = "ToiChatShell - A Mesh Network optimized communication " + \
+        "application."
     prompt = "\ntoiChatShell >> "
-    myFile = None
 
     # ----- basic toiChat commands -----
     def do_startserver(self, arg):
@@ -111,21 +113,12 @@ class toiChatShell(cmd.Cmd):
                 print("Attempt to stop server failed. Please try again")
                 return
             self.close()
-            print('\nThank you for using TOIChat!')
-            return
-        
 
     # ----- record and playback -----
-    def precmd(self, line):
-        line = line.lower()
-        if self.myFile and 'playback' not in line:
-            print(line, file=self.myFile)
-        return line
-
     def close(self):
-        if self.myFile:
-            self.myFile.close()
-            self.myFile = None
+        logging.shutdown()
+        print('\nThank you for using TOIChat!')
+        sys.exit(1)
 
     def start(self):
         while True:
@@ -138,8 +131,6 @@ class toiChatShell(cmd.Cmd):
                         "(call sign)?:\n >>  ")).lower()
                 except KeyboardInterrupt:
                     self.close()
-                    print('\nThank you for using TOIChat!')
-                    return True
                 if not callSign == "":
                     break
                 else:
@@ -210,13 +201,44 @@ class toiChatShell(cmd.Cmd):
             # Upon interrupt on main console shut down server and close
             #
             self.myToiChatServer.stopServer()
-            print('\nThank you for using TOIChat!')
-            sys.exit(0)
+            self.close()
 
-if __name__ == '__main__':
+def main(argv):
     # Check to make sure the program is ran as root
     #
     if not os.geteuid() == 0:
         print("You need to run this program with administrative privileges.")
         sys.exit(0)
+
+    # Parse for verbose information
+    #
+    parser = argparse.ArgumentParser(prog="toiChatShell.py", \
+         description="ToiChat - A Mesh Network " + \
+         "optimized communication application.")
+    parser.add_argument('--verbosity', '-v', action='count',
+        default=0, help='increase output verbosity')
+    
+    # Parse args for debug level
+    #
+    args = parser.parse_args()
+    if args.verbosity == 2:
+        print('Debuglevel set to DEBUG')
+        debuglevel = logging.DEBUG
+    elif args.verbosity == 1:
+        print('Debuglevel set to INFO')
+        debuglevel = logging.INFO
+    else:
+        debuglevel = logging.WARNING
+
+    # Create logging object.
+    #
+    logging.basicConfig(filename='TOIChat.log', \
+        format='%(asctime)s:%(msecs)d-%(name)s-%(levelname)s: %(message)s', \
+        datefmt='%Y%m%d_%H:%M:%S', level=debuglevel)
+
+    # Start toiChatShell
+    #
     toiChatShell().start()
+
+if __name__ == '__main__':
+    main(sys.argv)
