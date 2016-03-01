@@ -1,9 +1,9 @@
-
 #!/usr/bin/env python3
 
 import os # Used for testing the location to the router script is valid
 import socket # Used for testing IP validity.
 import subprocess # Used for running shell commands
+import re # Used for parsing router output
 
 # -- START FUNCTION DESCR --
 #
@@ -15,7 +15,8 @@ import subprocess # Used for running shell commands
 #       found
 #
 # Outputs:
-#  - IPs = returns the IPv4 addresses of nodes found on the mesh network in a list.
+#  - IPs = returns the IPv4 addresses of nodes found on the mesh network in 
+#    a list.
 #
 # -- END FUNCTION DESCR -- 
 def conn_router(default_gateway, user_pwd):
@@ -40,15 +41,15 @@ def conn_router(default_gateway, user_pwd):
     # Take output of command and return. 
     #
     nodes = ssh.communicate()[0]
-    print(nodes)
+    
     if len(nodes) < 7:
         # error = ssh.stderr.readlines()
         return None 
     else:
         #Parse output to extract IPs of local machines
         #
-        IPs = nodes.decode('ascii').split('\\n')
-
+        nodes = nodes.decode('ascii')
+        IPs = re.split(' |\n', nodes)
         # Check if IPs are valid IPv4 addresses
         #
         valid_IPs = []
@@ -56,8 +57,7 @@ def conn_router(default_gateway, user_pwd):
             try:
                 socket.inet_aton(TCP_IP)
             except socket.error:
-                pass
-
+                continue
             # If valid add it to the array
             #
             valid_IPs.append(TCP_IP)
@@ -66,6 +66,7 @@ def conn_router(default_gateway, user_pwd):
         #
         if valid_IPs == []:
             return None
+
     #Return a list of IPs found on the mesh network
     #
     return valid_IPs

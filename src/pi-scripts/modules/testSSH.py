@@ -2,6 +2,7 @@
 
 from modules.gatewayIP import gatewayIP
 from subprocess import call
+import getpass
 
 def testSSH():
     
@@ -14,12 +15,12 @@ def testSSH():
     while(rtrn != 0):
         # prompt user for password
         #
-        user_pwd = input("Router Password: ")
+        user_pwd = getpass.getpass("\nRouter Password >> ")
 
         # save to a file for sshpass  
         #
-        with open("user_pwd.txt", "wt") as f:
-            f.write(user_pwd)
+        #with open("user_pwd.txt", "wt") as f:
+        #    f.write(user_pwd)
 
         # validate the password
         #
@@ -28,7 +29,7 @@ def testSSH():
             'root@' + default_gateway, "exit"]) 
 
         if ( rtrn == 5 ):
-            print("Authentication Failed. Re-enter Password for Router.\n")
+            print("Authentication Failed. Re-enter Password for Router.")
 
         elif ( rtrn == 6 ):
             print("RSA Fingerprint not verified. Please Try Again.")

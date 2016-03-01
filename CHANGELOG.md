@@ -7,6 +7,7 @@ method (issue #1 #3)
 - New ToiChat CLI (issue #4)
 - Using the new CLI there is a better display out for one to one messaging
 (issue #12)
+- Automatic configuration of BBHM Mesh Node via Pi.
 
 Performance:
 - DNS will connect to the closest ToiChat neighbor upon forcedns function

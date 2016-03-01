@@ -82,13 +82,7 @@ class toiChatNameServer():
         # Variable to tell wait until next thread 
         #
         self.stopDNSPing = False
-
-        # Create thread to loop DNS Ping every 3 mins.
-        #
         self.dnsTableLock = Lock()
-        self.S = Thread(target=self.__loopPingDNS__)
-        self.S.daemon = True
-        self.S.start()
 
         # Define dictionary to hold values of user name
         # and key pairing of IP and other relevant information
@@ -127,6 +121,12 @@ class toiChatNameServer():
         self.addToDNS(self.myToiChatClient.getName(), self.getMyIP(), \
             time.strftime("%Y%m%d - %H:%M:%S"), \
             self.myToiChatClient.getDescription())
+
+        # Create thread to loop DNS Ping every 3 mins.
+        #
+        self.S = Thread(target=self.__loopPingDNS__)
+        self.S.daemon = True
+        self.S.start()
 
     # Print the current dns lookup table to the console
     #
@@ -356,9 +356,6 @@ class toiChatNameServer():
             self.printQueue.put("Connection to '" + \
                 str.strip(toiServerIP) + "' successful!")
             break
-        # After connection to a toiChatServer setup the local
-        # router to listen for new router arp requests
-        #txArpInfo()
         return 1
 
     # --------------------------------------------------------------------

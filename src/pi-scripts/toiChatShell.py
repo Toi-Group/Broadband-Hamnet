@@ -210,6 +210,7 @@ class toiChatShell(cmd.Cmd):
             # Upon interrupt on main console shut down server and close
             #
             self.myToiChatServer.stopServer()
+            print('\nThank you for using TOIChat!')
             sys.exit(0)
 
 if __name__ == '__main__':
