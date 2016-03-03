@@ -521,6 +521,13 @@ class toiChatServer():
                 # If after loop we still don't know who message is from
                 # prompt user that he has a new message
                 #
+            # Check to see if this chatter exists in our DNS table
+            #
+            if self.myToiChatNameServer.lookupHostnameByIP(\
+                decodeChatMsg.id.clientId) == None:
+                # If client Doesn't exists sync tables
+                #
+                self.myToiChatNameServer.syncDNS(decodeChatMsg.id.clientId)
             self.printQueueNow.put("You have a new message from : " + \
                 str(decodeChatMsg.id.clientName) + ". Open a chat " + \
                 "window to talk back.")

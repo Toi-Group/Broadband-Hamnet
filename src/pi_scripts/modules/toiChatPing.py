@@ -9,7 +9,7 @@
 # Author: Toi-Group
 #
 
-from modules.external.python_ping.ping import quiet_ping
+from modules import ping
 from collections import OrderedDict
 import os, sys # Used for redirecting any print statement to null
 
@@ -34,7 +34,7 @@ def pingIPSort(listIPs, myCount=1):
     for destIP in listIPs:
         # We now have a list of IPs. We sort them by fastest ping
         #
-        avgTime = quiet_ping(destIP, count=myCount)
+        avgTime = ping.quiet_ping(destIP, count=myCount)
         
         # Check to see if quient_ping return valid results
         #
@@ -57,7 +57,7 @@ def pingIPSort(listIPs, myCount=1):
 def pingOne(destIP, myCount=1):
     # Ping the machine passed
     #
-    avgTime = quiet_ping(destIP, count=myCount)
+    avgTime = ping.quiet_ping(destIP, count=myCount)
 
     # Check to see if quient_ping return valid results
     #

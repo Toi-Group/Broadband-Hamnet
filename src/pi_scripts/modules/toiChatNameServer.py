@@ -118,14 +118,14 @@ class toiChatNameServer():
     # Print the current dns lookup table to the console
     #
     def printDNSTable(self):
-        pp = pprint.PrettyPrinter(width=41, compact=True)
+        pp = pprint.PrettyPrinter(width=41)
         pp.pprint(self.dns)
         return 1
         
     # Print the current clients in the DNS table
     #
     def printClients(self):
-        pp = pprint.PrettyPrinter(width=41, compact=True)
+        pp = pprint.PrettyPrinter(width=41)
         # To print all clients we first have to remove our name from the 
         # dns table
         #
@@ -281,6 +281,23 @@ class toiChatNameServer():
         except KeyError:
             return None
         return update
+
+    # -- START FUNCTION DESCR --
+    #
+    # Initiates a DNS table sync with designated client
+    #
+    # Inputs:
+    #   - toiServerIP = The server we should sync with
+    #
+    # Outputs:
+    #   None
+    #
+    # -- END FUNCTION DESCR --
+    def syncDNS(self, toiServerIP):
+        requestDNS = self.createRequestDnsMessage()
+        self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
+                    toiServerPORT)
+        return 1
 
     # -- START FUNCTION DESCR --
     #
