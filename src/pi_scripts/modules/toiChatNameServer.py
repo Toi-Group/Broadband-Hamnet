@@ -295,8 +295,7 @@ class toiChatNameServer():
     # -- END FUNCTION DESCR --
     def syncDNS(self, toiServerIP):
         requestDNS = self.createRequestDnsMessage()
-        self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
-                    toiServerPORT)
+        self.myToiChatClient.sendMessage(toiServerIP, requestDNS)
         return 1
 
     # -- START FUNCTION DESCR --
@@ -320,6 +319,7 @@ class toiChatNameServer():
         # Get a list of IPs running Toi-Chat software on the mesh network
         #
         listIPs = conn_router(gatewayIP(), self.user_pwd)
+        self.logger.debug("List of returned IPs: " + str(listIPs))
         # Check to see if there are any IPs in the returned ARP list
         #
         if listIPs == None:
@@ -348,12 +348,12 @@ class toiChatNameServer():
                     # We tried all IPs in the list and could not connect to 
                     # any. Return error to stdout informing the user
                     self.logger.warning("Could not connect to '" + \
-                        toiServerIP + "'. Exited with status: " + \
+                        str.strip(toiServerIP) + "'. Exited with status: " + \
                         str(e) + ". Exhausted known list of hosts.")
                     return 0
                 else:
                     self.logger.info("Could not connect to '" + \
-                        + toiServerIP + "'... Exited with status: " + \
+                        str.strip(toiServerIP) + "'... Exited with status: " + \
                         str(e) + "Trying next IP in list.")
                     continue 
             # Did not fail to connect. Connection to server successful
@@ -402,6 +402,7 @@ class toiChatNameServer():
         for newClient in registerDNSMessage.clients:
             # Check if user is in the DNS already
             #
+
             if newClient.clientName in self.dns:
                 # If user is already in DNS check if receiver has updated
                 # client information

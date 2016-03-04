@@ -7,7 +7,7 @@ setup(
 
     # Project users protobuf
     #
-    install_requires = ['protobuf>=3.0.0b2'],
+    install_requires = ['protobuf==3.0.0b2'],
 
     # metadata for upload to PyPI
     author = "TOI-Group",
