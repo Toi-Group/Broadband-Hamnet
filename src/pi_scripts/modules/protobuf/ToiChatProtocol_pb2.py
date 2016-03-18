@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='ToiChatProtocol.proto',
   package='ToiChatProtocol',
-  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"`\n\nIdentifier\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\t\x12\x11\n\tdateAdded\x18\x03 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"t\n\nDnsMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x0f\n\x07\x63ommand\x18\x02 \x02(\t\x12,\n\x07\x63lients\x18\x03 \x03(\x0b\x32\x1b.ToiChatProtocol.Identifier\"_\n\x0b\x43hatMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x12\n\nrecipients\x18\x02 \x03(\t\x12\x13\n\x0btextMessage\x18\x03 \x02(\t')
+  serialized_pb=_b('\n\x15ToiChatProtocol.proto\x12\x0fToiChatProtocol\"\x87\x01\n\x0eToiChatMessage\x12\x31\n\ndnsMessage\x18\x01 \x01(\x0b\x32\x1b.ToiChatProtocol.DnsMessageH\x00\x12\x33\n\x0b\x63hatMessage\x18\x02 \x01(\x0b\x32\x1c.ToiChatProtocol.ChatMessageH\x00\x42\r\n\x0bmessageType\"`\n\nIdentifier\x12\x12\n\nclientName\x18\x01 \x02(\t\x12\x10\n\x08\x63lientId\x18\x02 \x02(\t\x12\x11\n\tdateAdded\x18\x03 \x02(\t\x12\x19\n\x0b\x64\x65scription\x18\x04 \x01(\t:\x04NONE\"\x84\x01\n\nDnsMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x0f\n\x07\x63ommand\x18\x02 \x02(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12,\n\x07\x63lients\x18\x04 \x03(\x0b\x32\x1b.ToiChatProtocol.Identifier\"_\n\x0b\x43hatMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x12\n\nrecipients\x18\x02 \x03(\t\x12\x13\n\x0btextMessage\x18\x03 \x02(\t\"E\n\nAckMessage\x12\'\n\x02id\x18\x01 \x02(\x0b\x32\x1b.ToiChatProtocol.Identifier\x12\x0e\n\x06status\x18\x02 \x02(\x08')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -138,8 +138,15 @@ _DNSMESSAGE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='clients', full_name='ToiChatProtocol.DnsMessage.clients', index=2,
-      number=3, type=11, cpp_type=10, label=3,
+      name='status', full_name='ToiChatProtocol.DnsMessage.status', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='clients', full_name='ToiChatProtocol.DnsMessage.clients', index=3,
+      number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -155,8 +162,8 @@ _DNSMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=278,
-  serialized_end=394,
+  serialized_start=279,
+  serialized_end=411,
 )
 
 
@@ -199,8 +206,45 @@ _CHATMESSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=396,
-  serialized_end=491,
+  serialized_start=413,
+  serialized_end=508,
+)
+
+
+_ACKMESSAGE = _descriptor.Descriptor(
+  name='AckMessage',
+  full_name='ToiChatProtocol.AckMessage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='ToiChatProtocol.AckMessage.id', index=0,
+      number=1, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='status', full_name='ToiChatProtocol.AckMessage.status', index=1,
+      number=2, type=8, cpp_type=7, label=2,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=510,
+  serialized_end=579,
 )
 
 _TOICHATMESSAGE.fields_by_name['dnsMessage'].message_type = _DNSMESSAGE
@@ -214,10 +258,12 @@ _TOICHATMESSAGE.fields_by_name['chatMessage'].containing_oneof = _TOICHATMESSAGE
 _DNSMESSAGE.fields_by_name['id'].message_type = _IDENTIFIER
 _DNSMESSAGE.fields_by_name['clients'].message_type = _IDENTIFIER
 _CHATMESSAGE.fields_by_name['id'].message_type = _IDENTIFIER
+_ACKMESSAGE.fields_by_name['id'].message_type = _IDENTIFIER
 DESCRIPTOR.message_types_by_name['ToiChatMessage'] = _TOICHATMESSAGE
 DESCRIPTOR.message_types_by_name['Identifier'] = _IDENTIFIER
 DESCRIPTOR.message_types_by_name['DnsMessage'] = _DNSMESSAGE
 DESCRIPTOR.message_types_by_name['ChatMessage'] = _CHATMESSAGE
+DESCRIPTOR.message_types_by_name['AckMessage'] = _ACKMESSAGE
 
 ToiChatMessage = _reflection.GeneratedProtocolMessageType('ToiChatMessage', (_message.Message,), dict(
   DESCRIPTOR = _TOICHATMESSAGE,
@@ -246,6 +292,13 @@ ChatMessage = _reflection.GeneratedProtocolMessageType('ChatMessage', (_message.
   # @@protoc_insertion_point(class_scope:ToiChatProtocol.ChatMessage)
   ))
 _sym_db.RegisterMessage(ChatMessage)
+
+AckMessage = _reflection.GeneratedProtocolMessageType('AckMessage', (_message.Message,), dict(
+  DESCRIPTOR = _ACKMESSAGE,
+  __module__ = 'ToiChatProtocol_pb2'
+  # @@protoc_insertion_point(class_scope:ToiChatProtocol.AckMessage)
+  ))
+_sym_db.RegisterMessage(AckMessage)
 
 
 # @@protoc_insertion_point(module_scope)

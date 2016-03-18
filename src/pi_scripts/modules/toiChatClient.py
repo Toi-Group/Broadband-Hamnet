@@ -106,6 +106,127 @@ class toiChatClient():
     
     # -- START FUNCTION DESCR --
     #
+    # Sends a ToiChatMessage over the designated socket. Since a
+    # socket is passed this function assumes the message being sent
+    # is an ACK message so it does not close the passed socket. This function  
+    # will append the length of the message to the beginning to 
+    # ensure the full message is sent over the socket.
+    #
+    # Inputs:
+    #  - clientSock = Open socket to send message to.
+    #  - decodedToiMessage = message type as defined by ToiChatMessage Protocol
+    #
+    # Outputs:
+    #   - Returns true if message was sent successfully.
+    #   - Returns the received message if waitRespone=True
+    #
+    # -- END FUNCTION DESCR -- 
+    def sendMessageSocket(self, serverSock, decodedToiMessage, \
+        waitResponse=False):        
+        # Convert ToiChatMessage to binary stream.
+        # 
+        encodedToiMessage = decodedToiMessage.SerializeToString()
+
+        # Append the length of the message to the beginning
+        #
+        encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
+            encodedToiMessage
+
+        # Send message over socket
+        #
+        serverSock.sendall(encodedToiMessage)
+
+        # Log successful send message event
+        #
+        self.logger.info("Message sent.")
+
+        if waitResponse==True:
+            # REDUDANT CODE FROM: toiChatServer
+            # Receive the first four bytes containing the length    
+            # of the message
+            #
+            raw_MSGLEN = self.__recvall__(serverSock, addr, 4)
+
+            # Ensure the length of the message is not empty
+            #
+            if not raw_MSGLEN:
+                serverSock.close()
+                return 1
+
+            # Get the length of the message from the data header
+            #
+            MSGLEN = struct.unpack('>I', raw_MSGLEN)[0]
+            self.logger.debug("expected len message = " + str(MSGLEN))
+            
+            # Continue receiving the full message expected from client
+            #
+            rawBuffer = self.__recvall__(serverSock, addr, MSGLEN)
+            self.logger.debug("actual len message = " + \
+                str(len(rawBuffer)))`
+
+            # Create a ToiChat Message Type 
+            #
+            decodedToiMessage = ToiChatProtocol_pb2.ToiChatMessage()
+
+            self.logger.debug("RAW Received MSG = " + str(rawBuffer))
+            # Decode the raw message 
+            #
+            decodedToiMessage.ParseFromString(rawBuffer)
+
+            # Find the type of message sent
+            #
+            msgType = decodedToiMessage.WhichOneof("messageType")
+
+            if msgType == self.getType[0]:
+                decodeDnsMsg = ToiChatProtocol_pb2.DnsMessage()
+                decodeDnsMsg = decodedToiMessage.dnsMessage
+                self.logger.debug("Decoded Received MSG = " + \
+                    str(decodeDnsMsg))
+                return decodeDnsMsg
+            else:
+                self.logger.error("Unable to Process Message of type. '" \
+                    + msgType + "'")
+                return 0
+        return 1
+
+    # -- START FUNCTION DESCR -- 
+    # REDUDANT FUNCTION CODE FROM: toiChatServer
+    #
+    # From socket passed, receive the message sent by a client up to MSGLEN
+    #
+    # Inputs:
+    #  - clientSock = socket to a toiChatClient
+    #  - MSGLEN = received the message on the socket up to this length.
+    #
+    # Outputs:
+    #  - data_packet = outputs message in binary format.
+    #
+    # -- END FUNCTION DESCR -- 
+    def __recvall__(self, clientSock, addr, MSGLEN):
+        # Initiate an array with the message being sent by client
+        #
+        data = b''
+        
+        # While the client is still sending a message
+        #
+        while len(data) < MSGLEN:
+            # Keep reading message from client
+            #
+            data_packet = clientSock.recv(MSGLEN - len(data))
+            if not data_packet:
+                self.logger.info("Connection to '" + \
+                    str(addr) + "' lost.")
+                return 0
+
+            # Append the data to the overall message
+            #
+            data += data_packet
+        # Return the full message received
+        #
+        return data
+
+    # -- START FUNCTION DESCR --
+    #
     # Sends a ToiChatMessage over a to a ToiChatSever. This function will 
     # append the length of the message to the beginning to 
     # ensure the full message is sent over the socket.
@@ -121,7 +242,7 @@ class toiChatClient():
     #
     # -- END FUNCTION DESCR -- 
     def sendMessage(self, toiServerIP, decodedToiMessage, \
-        toiServerPORT=5005):        
+        toiServerPORT=5005, waitResponse=False):        
         # Create a new socket to the server
         #
         serverSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -135,30 +256,21 @@ class toiChatClient():
         #
         serverSock.connect((toiServerIP, toiServerPORT))
         #
-        # Assume connection successful after this point
-
-        # Convert ToiChatMessage to binary stream.
-        # 
-        encodedToiMessage = decodedToiMessage.SerializeToString()
-
-        # Append the length of the message to the beginning
+        # Log successful send message event
         #
-        encodedToiMessage = struct.pack('>I', len(encodedToiMessage)) + \
-            encodedToiMessage
+        self.logger.info("Connection to ('" + str(toiServerIP) + \
+            "', " + str(toiServerPORT) + ") established.")
 
-        # Send message over socket
+        # Send over socket
         #
-        serverSock.sendall(encodedToiMessage)
+        response = self.sendMessageSocket(clientSock, decodedToiMessage, \
+            waitResponse)
 
         # Close socket to server
         #
         serverSock.close()
 
-        # Log successful send message event
-        #
-        self.logger.info("Message sent to ('" + str(toiServerIP) + \
-            "', " + str(toiServerPORT) + ").")
-        return 1
+        return response
 
     # -- START FUNCTION DESCR --
     #
@@ -177,10 +289,10 @@ class toiChatClient():
     #
     # -- END FUNCTION DESCR -- 
     def sendMessageByHostname(self, toiServerHostname, decodedToiMessage, \
-        toiServerPORT=5005):
+        toiServerPORT=5005, waitResponse=False):
         return self.sendMessage(\
             self.myToiChatNameServer.lookupIPByHostname(toiServerHostname),
-            decodedToiMessage, toiServerPORT)
+            decodedToiMessage, toiServerPORT, waitResponse)
 
     # Create a message populating the headers of the DnsMessage type
     # with this client information.
