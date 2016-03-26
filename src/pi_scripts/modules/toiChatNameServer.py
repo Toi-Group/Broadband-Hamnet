@@ -46,21 +46,22 @@ class toiChatNameServer():
     # -- START CLASS CONSTRUCTOR -- 
     #
     # Upon instantiation adds its own name, ipv4 address, 
-    # and description to the dns lookup table
+    #  and description to the dns lookup table
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, toiChatClient):
+    def __init__(self, toiChatClient,user_pwd):
         # Logging instance where should we save nameserver logs to
         #
         self.logger = logging.getLogger(__name__)
 
         # Prompt for Router's root password
         #
-        self.user_pwd = testSSH()
-
+        #if not user_pwd:    
+            #self.user_pwd = testSSH()
+        self.user_pwd = user_pwd
         # Make router listen for ARP requests
         #
-        listen_router(self.user_pwd)    
+        listen_router(user_pwd)    
     
         # Store ToiChatClient to used to send dns messages
         #
