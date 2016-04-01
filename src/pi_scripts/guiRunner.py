@@ -109,7 +109,7 @@ class ToiChatGui():
         
         #Get text from the user
         #
-        callSign = self.userName.get_text()
+        self.callSign = self.userName.get_text()
         self.routerPassword = self.passWord.get_text()
         miscInformation = self.miscellaneous.get_text()
 
@@ -118,16 +118,16 @@ class ToiChatGui():
         if not self.routerPassword:
             self.errorMessage.set_text('No Password Entered')
         
-        elif not callSign:
+        elif not self.callSign:
             self.errorMessage.set_text('No Username Entered')
         
         #Start toiChatclient
         #
         else:
             if not miscInformation:
-                self.myToiChatClient = toiChatClient(callSign)
+                self.myToiChatClient = toiChatClient(self.callSign)
             else:
-                self.myToiChatClient = toiChatClient(callSign,miscInformation)
+                self.myToiChatClient = toiChatClient(self.callSign,miscInformation)
             #Verify if password given is correct
             #
             try: 
@@ -233,19 +233,28 @@ class ToiChatGui():
     # -- START FUNCTION DESCRIPTION --
     #
     # function to handle 'Send Message' button clicks
-    # grabs text inputed 
+    # grabs text inputed, calls function to handle putting message in chatbox
     #
     # -- END FUNCTION DESCRIPTION -- 
     def sendMessageClick(self, widget):
+        buffer = self.textView_chatbox.get_buffer()
         newMessage = self.enterMessage_chatbox.get_text()
         if not newMessage:
             self.error_dns_textbox.set_text('No Message Entered.')
         print(newMessage)
         self.displayMessageSent(newMessage)
  
+    # -- START FUNCTION DESCRIPTION --
+    #
+    # display sent message in the chatBox
+    #
+    # 
+    # -- START FUNCTION DESCRIPTION -- 
     def displayMessageSent(self, message):
-        print('displayMessageSent')
-        print(newMessage)
+        buffer = self.textView_chatbox.get_buffer()
+        iter = buffer.get_iter_at_offset(-1)
+        buffer.insert(iter,("\n" + self.callSign + " >> " + message))
+        self.textView_chatbox.set_buffer(buffer)
 
     # -- START FUNCTION DESCRIPTION -- 
     #
