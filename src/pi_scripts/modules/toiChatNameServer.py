@@ -130,17 +130,25 @@ class toiChatNameServer():
         # To print all clients we first have to remove our name from the 
         # dns table
         #
+        #myName = self.myToiChatClient.getName()
+        #clientList = []
+        #for key in self.dns.keys():
+        #    if not key == myName:
+        #        clientList.append(key)
+        pp.pprint(self.getClients())
+        return 1
+
+    def getClients(self):
         myName = self.myToiChatClient.getName()
-        clientList = []
+        clientList = [] 
         for key in self.dns.keys():
             if not key == myName:
                 clientList.append(key)
-        pp.pprint(clientList)
-        return 1
-
+        return(clientList)
     # Returns the IPv4 address of the local machine for the given interface
     # 
     # Sourced from: http://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib
+
     def getMyIP(self, iface = 'eth0'):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sockfd = sock.fileno()
