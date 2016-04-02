@@ -56,15 +56,11 @@ class ToiChatGui():
         self.update_dns_button = self.builder.get_object('update_dns')
         self.error_dns_textbox = self.builder.get_object('errorDns')   
 
-        #chat box
+         
+        #Chat window list 
         #
-        self.window_chatbox = self.builder.get_object('chatBox')
-        self.scrollDisplay_chatbox = self.builder.get_object('scrollDisplay')
-        self.viewDisplay_chatbox = self.builder.get_object('viewDisplay')
-        self.enterMessage_chatbox = self.builder.get_object('enterMessage')
-        self.textView_chatbox = self.builder.get_object('textView')
-        self.sendMessage_button = self.builder.get_object('sendMessage')
-        
+        self.chatWindowList = []
+    
         #model to create strings for the combo box
         #will be filled later
         #
@@ -84,18 +80,101 @@ class ToiChatGui():
             "on_quit_clicked" : self.quitClick,
             #"on_comboboxtext1_changed" : self.comboChanged,
             "on_start_Chat_clicked" : self.startChatClick,
-            "on_update_dns_clicked" : self.updateDns,
-            "on_sendMessage_clicked" : self.sendMessageClick
+            "on_update_dns_clicked" : self.updateDns
+            #"on_sendMessage_clicked" : self.sendMessageClick
         }  
     
         self.builder.connect_signals(self.dic)
 
         #show login window
         #
-        self.login_window.show()
-        
-         
+        self.login_window.show()         
     
+    # -- CLASS ChatWindow --
+    #
+    # creates a chat window and handles all functionality of the chat 
+    # with a specific recipient 
+    # 
+    class ChatWindow():
+
+        def __init__(self, myToiChatClient, recipient, callSign):
+             
+            self.chat_builder = Gtk.Builder()
+      
+            self.chat_builder.add_from_file('toiTest.glade')
+    
+            #chat box
+            #
+            self.window_chatbox = self.chat_builder.get_object('chatBox')
+            self.scrollDisplay_chatbox = self.chat_builder.get_object('scrollDisplay')
+            self.viewDisplay_chatbox = self.chat_builder.get_object('viewDisplay')
+            self.enterMessage_chatbox = self.chat_builder.get_object('enterMessage')
+            self.textView_chatbox = self.chat_builder.get_object('textView')
+            self.sendMessage_button = self.chat_builder.get_object('sendMessage')
+
+            self.chat_dic = {"on_sendMessage_clicked" : self.sendMessageClick}
+         
+            self.chat_builder.connect_signals(self.chat_dic)        
+        
+            self.currentRecipient = recipient
+
+            self.currentCallSign = callSign
+
+            self.myToiChatter = toiChatter(myToiChatClient, recipient)
+           
+            self.window_chatbox.show()
+            
+            self.buffer = self.textView_chatbox.get_buffer()
+ 
+            self.buffer.set_text('test')
+
+            self.textView_chatbox.set_buffer(self.buffer)
+
+        # -- START FUNCTION DESCRIPTION -- 
+        #
+        # Intiate chat with valid user
+        # Open instance of chat window 
+        # grab text to send to other chatter
+        # recieve text and put it in viewable area 
+        #
+        # -- END FUNCTION DESCRIPTION --
+        #def chatBox(self,current_chatter):
+        #    print(current_chatter)
+        #    self.window_chatbox.show()
+        #    self.myToiChatter = toiChatter(self.myToiChatClient,current_chatter) 
+        #    buffer = self.textView_chatbox.get_buffer()
+        #    buffer.set_text('test')
+        #    self.textView_chatbox.set_buffer(buffer)
+  
+        # -- START FUNCTION DESCRIPTION --
+        #
+        # function to handle 'Send Message' button clicks
+        # grabs text inputed, calls function to handle putting message in chatbox
+        #
+        # -- END FUNCTION DESCRIPTION -- 
+        def sendMessageClick(self, widget):
+            print('sendMessageClick')
+            self.buffer = self.textView_chatbox.get_buffer()
+            self.newMessage = self.enterMessage_chatbox.get_text()
+            if not self.newMessage:
+                self.error_dns_textbox.set_text('No Message Entered.')
+            print(self.newMessage)
+            self.displayMessageSent(self.newMessage)
+
+        # -- START FUNCTION DESCRIPTION --
+        #
+        # display sent message in the chatBox
+        # start a new line for each message and add the username
+        # 
+        # -- START FUNCTION DESCRIPTION -- 
+        def displayMessageSent(self, message):
+            self.buffer = self.textView_chatbox.get_buffer()
+            self.iter = self.buffer.get_iter_at_offset(-1)
+            self.buffer.insert(self.iter,("\n" + self.currentCallSign + " >> " + message))
+            self.textView_chatbox.set_buffer(self.buffer)
+
+
+
     # -- START FUNCTION DESCRIPTION --
     #
     # login button clicked
@@ -188,7 +267,7 @@ class ToiChatGui():
         #
         for client in self.clientList:
             self.dns_chatters.append([str(client)])
-       
+        
         #display clients in the gui
         #
         self.comboBox_dns.set_model(self.dns_chatters)              
@@ -213,48 +292,10 @@ class ToiChatGui():
         if(chatter ==  None):
             self.error_dns_textbox.set_text('Nothing Selected. Select a Name to Continue.')
         else:
-            self.chatBox(chatter)   
+            #self.chatBox(chatter)   
+            self.chatWindowList.append(self.ChatWindow(self.myToiChatClient, chatter, self.callSign))
 
-    # -- START FUNCTION DESCRIPTION -- 
-    #
-    # Intiate chat with valid user
-    # Open instance of chat window 
-    # grab text to send to other chatter
-    # recieve text and put it in viewable area 
-    #
-    # -- END FUNCTION DESCRIPTION --
-    def chatBox(self,current_chatter):
-        print(current_chatter)
-        self.window_chatbox.show() 
-        buffer = self.textView_chatbox.get_buffer()
-        buffer.set_text('test')
-        self.textView_chatbox.set_buffer(buffer)
     
-    # -- START FUNCTION DESCRIPTION --
-    #
-    # function to handle 'Send Message' button clicks
-    # grabs text inputed, calls function to handle putting message in chatbox
-    #
-    # -- END FUNCTION DESCRIPTION -- 
-    def sendMessageClick(self, widget):
-        buffer = self.textView_chatbox.get_buffer()
-        newMessage = self.enterMessage_chatbox.get_text()
-        if not newMessage:
-            self.error_dns_textbox.set_text('No Message Entered.')
-        print(newMessage)
-        self.displayMessageSent(newMessage)
- 
-    # -- START FUNCTION DESCRIPTION --
-    #
-    # display sent message in the chatBox
-    #
-    # 
-    # -- START FUNCTION DESCRIPTION -- 
-    def displayMessageSent(self, message):
-        buffer = self.textView_chatbox.get_buffer()
-        iter = buffer.get_iter_at_offset(-1)
-        buffer.insert(iter,("\n" + self.callSign + " >> " + message))
-        self.textView_chatbox.set_buffer(buffer)
 
     # -- START FUNCTION DESCRIPTION -- 
     #
@@ -282,23 +323,36 @@ class ToiChatGui():
     # 
     # -- END FUNCTION DESCRIPTION --  
     def threadUpdateDns(self):
-        print('threadUpdateDns')
+        
+        #update dns by attempting to find a server
+        #display error messages if needed
+        #
         if self.myNameServer.attemptFindServer() == True:
             print('conn success')
         else:
             self.error_dns_textbox.set_text('Connection to ToiChat Network Failed. Please Try Again Later')
         
+        #populate a list of clients
+        #
         self.clientList = []
         while(self.clientList == []):
              self.clientList = self.myNameServer.getClients()
-
+          
+        #clear the current liststore to remove duplicates
+        #
         self.dns_chatters.clear() 
 
+        #populate the liststore
+        #
         for client in self.clientList:
             self.dns_chatters.append([str(client)])
 
+        #populate combo box with liststore 
+        #
         self.comboBox_dns.set_model(self.dns_chatters)
 
+        #stop spinner to indicate that operation is complete
+        #
         self.spinner.stop()
 
     # -- START FUNCTION DESCRIPTION --
