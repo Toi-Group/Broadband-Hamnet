@@ -32,6 +32,7 @@ class ToiChatGui():
     #
     # -- END CLASS CONSTRUCTOR -- 
     def __init__(self):
+
         #Load glade file for login window
         #initilize all buttons and entry boxes
         #Login window
@@ -97,10 +98,22 @@ class ToiChatGui():
     # 
     class ChatWindow():
 
-        def __init__(self, myToiChatClient, recipient, callSign):
+        # -- START CLASS CONSTRUCTOR --
+        #
+        # input - Toi chat client to send messges, the recipient callsign
+        # and users callsign
+        # create a builder object to make a chat window for each 
+        # instantiated object 
+        # connect buttons to methods defined in the ChatWindow class
+        # instantiate a toiChatter object for each chat window
+        # show the chat window
+        #
+        # -- END CLASS CONSTRUCTOR --
+        def __init__(self, myToiChatClient, myToiChatServer, recipient, callSign):
              
+            #create bulder object and load glade file to get chat window definitions 
+            #
             self.chat_builder = Gtk.Builder()
-      
             self.chat_builder.add_from_file('toiTest.glade')
     
             #chat box
@@ -112,40 +125,42 @@ class ToiChatGui():
             self.textView_chatbox = self.chat_builder.get_object('textView')
             self.sendMessage_button = self.chat_builder.get_object('sendMessage')
 
+            #connect the signals from the chat window box to methods in the class
+            #
             self.chat_dic = {"on_sendMessage_clicked" : self.sendMessageClick}
-         
             self.chat_builder.connect_signals(self.chat_dic)        
-        
+
+            #grab command line inputs and make them local variables
+            #not sure if this is needed 
+            #        
             self.currentRecipient = recipient
-
             self.currentCallSign = callSign
+            self.currentToiChatClient = myToiChatClient
+            self.currentToiChatServer = myToiChatServer
 
-            self.myToiChatter = toiChatter(myToiChatClient, recipient)
+            #instantiate toiChatter object 
+            #  
+            self.myToiChatter = toiChatter(self.currentToiChatClient, recipient)
+          
+            #pass the ToiChatter instance to the server
+            #
+            self.currentToiChatServer.addToiChatter(self.myToiChatter)
            
+            #show the window
+            #
             self.window_chatbox.show()
             
-            self.buffer = self.textView_chatbox.get_buffer()
- 
-            self.buffer.set_text('test')
+            #start a recieve message thread 
+            # 
+            #recieveMessage_thread = threading.Thread(target=self.recieveMessage)
+            #recieveMessage_thread.daemon = True
+            #recieveMessage_thread.start()
 
-            self.textView_chatbox.set_buffer(self.buffer)
 
-        # -- START FUNCTION DESCRIPTION -- 
-        #
-        # Intiate chat with valid user
-        # Open instance of chat window 
-        # grab text to send to other chatter
-        # recieve text and put it in viewable area 
-        #
-        # -- END FUNCTION DESCRIPTION --
-        #def chatBox(self,current_chatter):
-        #    print(current_chatter)
-        #    self.window_chatbox.show()
-        #    self.myToiChatter = toiChatter(self.myToiChatClient,current_chatter) 
-        #    buffer = self.textView_chatbox.get_buffer()
-        #    buffer.set_text('test')
-        #    self.textView_chatbox.set_buffer(buffer)
-  
+        #def recieveMessage:
+        #    print('here') 
+        #    while(1):
+        #        i =1 
         # -- START FUNCTION DESCRIPTION --
         #
         # function to handle 'Send Message' button clicks
@@ -153,13 +168,26 @@ class ToiChatGui():
         #
         # -- END FUNCTION DESCRIPTION -- 
         def sendMessageClick(self, widget):
-            print('sendMessageClick')
+            #get current buffer
+            #
             self.buffer = self.textView_chatbox.get_buffer()
+            
+            #get message input
+            #
             self.newMessage = self.enterMessage_chatbox.get_text()
+            
+            #check if message input is valid
+            #
             if not self.newMessage:
                 self.error_dns_textbox.set_text('No Message Entered.')
-            print(self.newMessage)
+            
+            #display the sent message in the chat window
+            #
             self.displayMessageSent(self.newMessage)
+            
+            #send the message to the other user 
+            #
+            self.myToiChatter.sendOneChatMessage(self.newMessage)
 
         # -- START FUNCTION DESCRIPTION --
         #
@@ -168,9 +196,21 @@ class ToiChatGui():
         # 
         # -- START FUNCTION DESCRIPTION -- 
         def displayMessageSent(self, message):
+            #get the current buffer
+            #
             self.buffer = self.textView_chatbox.get_buffer()
+            
+            #set position of the buffer to be the very end 
+            #
             self.iter = self.buffer.get_iter_at_offset(-1)
-            self.buffer.insert(self.iter,("\n" + self.currentCallSign + " >> " + message))
+            
+            #insert new message into the buffer by moving it to a new line
+            #and concatenating callsign 
+            #
+            self.buffer.insert(self.iter,("\n" + self.currentCallSign + " : " + message))
+           
+            #place updated buffer back into the chat window 
+            #
             self.textView_chatbox.set_buffer(self.buffer)
 
 
@@ -293,7 +333,7 @@ class ToiChatGui():
             self.error_dns_textbox.set_text('Nothing Selected. Select a Name to Continue.')
         else:
             #self.chatBox(chatter)   
-            self.chatWindowList.append(self.ChatWindow(self.myToiChatClient, chatter, self.callSign))
+            self.chatWindowList.append(self.ChatWindow(self.myToiChatClient, self.myToiChatServer, chatter, self.callSign))
 
     
 

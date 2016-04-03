@@ -106,33 +106,33 @@ class toiChatter():
         #
         # http://stackoverflow.com/questions/2082387/reading-input-from-raw-input-without-having-the-prompt-overwritten-by-other-th
         # Next line said to be reasonably portable for various Unixes
-        (rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
+        #(rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
 
-        text_len = len(readline.get_line_buffer())+2
+        #text_len = len(readline.get_line_buffer())+2
 
         # ANSI escape sequences (All VT100 except ESC[0G)
         # Clear current line
         #
-        sys.stdout.write('\x1b[2K')
+        #sys.stdout.write('\x1b[2K')
 
         # Move to start of line
         #
-        sys.stdout.write('\x1b[1A\x1b[2K'*int(text_len/cols))
+        #sys.stdout.write('\x1b[1A\x1b[2K'*int(text_len/cols))
 
         # Move to start of line
         #
-        sys.stdout.write('\x1b[0G')
+        #sys.stdout.write('\x1b[0G')
 
         # Print received message
         #
-        print(myChatMessage.id.clientName + ": " + myChatMessage.textMessage)
+        #print(myChatMessage.id.clientName + ": " + myChatMessage.textMessage)
 
         # Print the message that came before
         #
-        sys.stdout.write(' >> ' + readline.get_line_buffer())
-        sys.stdout.flush()
+        #sys.stdout.write(' >> ' + readline.get_line_buffer())
+        #sys.stdout.flush()
 
-        return 1
+        return (myChatMessage.textMessage)
 
     # Return who this chatter's recipient currently is
     #
