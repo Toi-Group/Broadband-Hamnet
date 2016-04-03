@@ -140,7 +140,7 @@ class ToiChatGui():
 
             #instantiate toiChatter object 
             #  
-            self.myToiChatter = toiChatter(self.currentToiChatClient, recipient)
+            self.myToiChatter = toiChatter(self.currentToiChatClient, recipient, self.textView_chatbox)
           
             #pass the ToiChatter instance to the server
             #

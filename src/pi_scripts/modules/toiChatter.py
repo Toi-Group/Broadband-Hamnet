@@ -29,7 +29,7 @@ class toiChatter():
     # Upon start put user in chatting program
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, toiChatClient, recipient):
+    def __init__(self, toiChatClient, recipient, textView):
         # Store ToiChatClient to used to send chat messages
         #
         self.myToiChatClient = toiChatClient
@@ -37,6 +37,10 @@ class toiChatter():
         # Store who we are talking to
         #
         self.recipient = recipient
+
+        #Store textView object
+        #
+        self.myTextView = textView
 
     def startInstantMessage(self):
         # Clear the console
@@ -102,37 +106,19 @@ class toiChatter():
     # Handle a message from a client
     #
     def handleChatMessage(self, myChatMessage):
-        # Following lines sourced from stackoverflow
-        #
-        # http://stackoverflow.com/questions/2082387/reading-input-from-raw-input-without-having-the-prompt-overwritten-by-other-th
-        # Next line said to be reasonably portable for various Unixes
-        #(rows,cols) = struct.unpack('hh', fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ,'1234'))
-
-        #text_len = len(readline.get_line_buffer())+2
-
-        # ANSI escape sequences (All VT100 except ESC[0G)
-        # Clear current line
-        #
-        #sys.stdout.write('\x1b[2K')
-
-        # Move to start of line
-        #
-        #sys.stdout.write('\x1b[1A\x1b[2K'*int(text_len/cols))
-
-        # Move to start of line
-        #
-        #sys.stdout.write('\x1b[0G')
 
         # Print received message
         #
-        #print(myChatMessage.id.clientName + ": " + myChatMessage.textMessage)
+        self.buffer = self.myTextView.get_buffer()
+ 
+        self.iter = self.buffer.get_iter_at_offset(-1)
 
-        # Print the message that came before
-        #
-        #sys.stdout.write(' >> ' + readline.get_line_buffer())
-        #sys.stdout.flush()
+        self.buffer.insert(self.iter,("\n" + myChatMessage.id.clientName + " : " + myChatMessage.textMessage))
 
-        return (myChatMessage.textMessage)
+        self.myTextView.set_buffer(self.buffer)
+
+
+        return (1)
 
     # Return who this chatter's recipient currently is
     #
