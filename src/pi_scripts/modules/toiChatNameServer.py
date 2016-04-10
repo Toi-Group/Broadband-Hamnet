@@ -143,8 +143,21 @@ class toiChatNameServer():
         clientList = [] 
         for key in self.dns.keys():
             if not key == myName:
-                clientList.append(key)
+                miscInfo = self.dns[key]['description']
+                if miscInfo:
+                    clientList.append(str(key) +' Misc: ' + str(miscInfo))
+                else:
+                    clientList.append(str(key))
         return(clientList)
+
+    def getMisc(self):
+        myName = self.myToiChatClient.getName()
+        miscList = []
+        for key in self.dns.keys():
+            if not key == myName:
+                miscList.append(dns.get('description'))
+        return(miscList)      
+
     # Returns the IPv4 address of the local machine for the given interface
     # 
     # Sourced from: http://stackoverflow.com/questions/166506/finding-local-ip-addresses-using-pythons-stdlib

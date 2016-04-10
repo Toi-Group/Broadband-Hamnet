@@ -336,6 +336,9 @@ class ToiChatGui():
     #
     # -- END FUNCTION DESCRIPTION --
     def updateDns(self, widget):
+        #clear error box in case connection is unsuccessful again 
+        #
+        self.error_dns_textbox.set_text(' ')
         #start the spinner
         #
         self.spinner.start()
@@ -368,8 +371,8 @@ class ToiChatGui():
         self.clientList = []
         while(self.clientList == []):
              self.clientList = self.myNameServer.getClients()
-          
-        #clear the current liststore to remove duplicates
+
+        #clear the liststore before filling it or things will be duplicated   
         #
         self.dns_chatters.clear() 
 
