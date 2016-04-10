@@ -43,7 +43,7 @@ class toiChatServer():
     #   - Defaults to port = 5005
     #
     # -- END CLASS CONSTRUCTOR -- 
-    def __init__(self, toiChatNameServer, PORT_TOICHAT=5005):
+    def __init__(self, toiChatNameServer, errorTextbox, PORT_TOICHAT=5005):
         # Store Logging file where should we save server logs to
         #
         self.logger = logging.getLogger(__name__)
@@ -55,6 +55,8 @@ class toiChatServer():
         # Define port ToiChat uses to communicate
         #
         self.PORT_TOICHAT = PORT_TOICHAT;
+
+        self.myErrorTextbox = errorTextbox
 
         # Handle multiple chat instances
         #
@@ -98,6 +100,7 @@ class toiChatServer():
     def __del__(self):
         self.stopServer()
     
+
     # -- START FUNCTION DESCR --
     #
     # Starts a thread listening on PORT_TOICHAT for incoming socket 
@@ -528,9 +531,11 @@ class toiChatServer():
                 # If client Doesn't exists sync tables
                 #
                 self.myToiChatNameServer.syncDNS(decodeChatMsg.id.clientId)
-            self.printQueueNow.put("You have a new message from : " + \
-                str(decodeChatMsg.id.clientName) + ". Open a chat " + \
-                "window to talk back.")
+
+            #display that a message came from this particular user 
+            #
+            self.myErrorTextbox.set_text('You have a message from : ' + str(decodeChatMsg.id.clientName) + '.Open a chat window to talk back')
+         
             return 1
         self.logger.error("Unable to Process Message of type. '" \
             + msgType + "'")

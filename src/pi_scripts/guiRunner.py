@@ -150,17 +150,6 @@ class ToiChatGui():
             #
             self.window_chatbox.show()
             
-            #start a recieve message thread 
-            # 
-            #recieveMessage_thread = threading.Thread(target=self.recieveMessage)
-            #recieveMessage_thread.daemon = True
-            #recieveMessage_thread.start()
-
-
-        #def recieveMessage:
-        #    print('here') 
-        #    while(1):
-        #        i =1 
         # -- START FUNCTION DESCRIPTION --
         #
         # function to handle 'Send Message' button clicks
@@ -283,7 +272,7 @@ class ToiChatGui():
         #
         self.myNameServer = toiChatNameServer(self.myToiChatClient,self.verified_routerPassword)
         self.myToiChatClient.updateNameServer(self.myNameServer)
-        self.myToiChatServer = toiChatServer(self.myNameServer)
+        self.myToiChatServer = toiChatServer(self.myNameServer, self.error_dns_textbox)
         self.myToiChatServer.startServer()
         
         #attempt to connect to a server, if unsuccessful exit program
@@ -315,6 +304,8 @@ class ToiChatGui():
         #operation complete stop spinner
         #
         self.spinner.stop()
+
+        
 
     # -- START FUNCTION DESCRIPTION --
     # 
