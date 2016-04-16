@@ -22,12 +22,14 @@ d = [25 20 16 10 3.1]; %km
 
 figure(1)
 plot(d,rb)
+grid on
 xlabel('distance (km)')
 ylabel('Data Rate (kb/sec)')
 title('Effective Data Rate as a Function of Distance')
 
 figure(2)
 plot(d, SNR)
+grid on
 xlabel('distance (km)')
 ylabel('Signal to Noise Ratio (dB)')
 title('SNR as a Function of Distance')
