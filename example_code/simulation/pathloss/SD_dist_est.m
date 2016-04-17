@@ -21,10 +21,10 @@ SNR = [16 20 22 26 32]; %dB
 d = [25 20 16 10 3.1]; %km
 
 figure(1)
-plot(d,rb)
+plot(d,rb./1000)
 grid on
 xlabel('distance (km)')
-ylabel('Data Rate (kb/sec)')
+ylabel('Data Rate (Mbps)')
 title('Effective Data Rate as a Function of Distance')
 
 figure(2)
