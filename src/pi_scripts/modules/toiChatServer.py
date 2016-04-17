@@ -499,7 +499,7 @@ class toiChatServer():
             decodeDnsMsg = decodedToiMessage.dnsMessage
             self.logger.debug("Decoded Received MSG = " + \
                 str(decodeDnsMsg))
-            self.myToiChatNameServer.handleDnsMessage(decodeDnsMsg, clientSock)
+            self.myToiChatNameServer.handleDnsMessage(decodeDnsMsg)
             return 1
         elif msgType == self.getType[1]:
             decodeChatMsg = ToiChatProtocol_pb2.ChatMessage()

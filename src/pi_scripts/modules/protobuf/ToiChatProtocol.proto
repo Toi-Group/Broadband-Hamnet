@@ -25,8 +25,7 @@ message Identifier {
 message DnsMessage {
     required Identifier id = 1;
     required string command = 2;
-    optional string status = 3;
-    repeated Identifier clients = 4;
+    repeated Identifier clients = 3;
 }
 
 message ChatMessage {
@@ -35,7 +34,3 @@ message ChatMessage {
     required string textMessage = 3;
 }
 
-message AckMessage{
-    required Identifier id = 1;
-    required bool status = 2;
-}

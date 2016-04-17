@@ -39,9 +39,7 @@ class toiChatNameServer():
     #
     getCommand={
         0:"register",
-        1:"request",
-        2:"login",
-        3:"ACK"
+        1:"request"
     }
     DNS_PING_INTERVAL = 20 # In seconds
 
@@ -131,13 +129,21 @@ class toiChatNameServer():
         # To print all clients we first have to remove our name from the 
         # dns table
         #
+        #myName = self.myToiChatClient.getName()
+        #clientList = []
+        #for key in self.dns.keys():
+        #    if not key == myName:
+        #        clientList.append(key)
+        pp.pprint(self.getClients())
+        return 1
+    
+    def getClients(self):
         myName = self.myToiChatClient.getName()
         clientList = []
         for key in self.dns.keys():
             if not key == myName:
                 clientList.append(key)
-        pp.pprint(clientList)
-        return 1
+        return(clientList)     
 
     # Returns the IPv4 address of the local machine for the given interface
     # 
@@ -256,17 +262,6 @@ class toiChatNameServer():
         self.stopDNSPing = False
         return None
 
-    # method to IP of the closest toiChatServer in DNS table. If only
-    # one entry it points to that toiChatServer
-    #   
-    def lookupNearestToiChatServer(self):
-        # Closest Server not ourselves
-        #
-        return min((self.dns[key]['lastPingVal'], key) \
-            [key for key in self.dns.keys() \
-            if key not self.myToiChatClient.getName()])[1]
-        #result = min(dnsEntires, key=lambda x:self.dns[x]['lastPingVal'])
-
     # method to return last update of passedIP
     #   
     def lookupAddedByHostname(self, userHostname):
@@ -306,14 +301,7 @@ class toiChatNameServer():
     #   None
     #
     # -- END FUNCTION DESCR --
-    def forceSyncDNS(self, toiServerIP=None):
-        # If toiServerIP field is empty then connect to nearest toiServer
-        #
-        if toiServerIP:
-            try:
-                toiServerIP = self.lookupNearestToiChatServer()
-            except Exception as e:
-                return 0
+    def syncDNS(self, toiServerIP):
         requestDNS = self.createRequestDnsMessage()
         self.myToiChatClient.sendMessage(toiServerIP, requestDNS)
         return 1
@@ -349,6 +337,9 @@ class toiChatNameServer():
         #
         sortIPs = pingIPSort(listIPs)[0]
 
+        # Create a request DNS information request message
+        #
+        requestDNS = self.createRequestDnsMessage()
         self.logger.debug("List of potential TOIChat Hosts:" + \
             str(sortIPs))
 
@@ -358,20 +349,8 @@ class toiChatNameServer():
             self.logger.debug("Trying to connect to '" + \
                 str.strip(toiServerIP) + "'.")
             try:
-                response = self.myToiChatClient.sendMessage(toiServerIP, loginDNS, \
-                    toiServerPORT, waitResponse=True)
-                # Did not fail to connect. Connection to server successful
-                #
-                if self.handleDnsMessage(response) == True:
-                    # Break out of for loop
-                    #
-                    # Sync our DNS table with the found server
-                    #
-                    self.forceSyncDNS(toiServerIP)
-                    break
-                # Failed to login
-                #
-                return 0
+                self.myToiChatClient.sendMessage(toiServerIP, requestDNS, \
+                    toiServerPORT)
             except Exception as e:
                 if toiServerIP == sortIPs[len(sortIPs)-1]:
                     # We tried all IPs in the list and could not connect to 
@@ -385,6 +364,10 @@ class toiChatNameServer():
                         str.strip(toiServerIP) + "'... Exited with status: " + \
                         str(e) + "Trying next IP in list.")
                     continue 
+            # Did not fail to connect. Connection to server successful
+            # Break out of for loop
+            #
+            break
         return 1
 
     # --------------------------------------------------------------------
@@ -393,31 +376,23 @@ class toiChatNameServer():
     # Handle DnsMessage type received from a toiChatServer instance.  
     # Message type is already known to be DNS message
     #
-    def handleDnsMessage(self, myDnsMessage, clientSock=None):
+    def handleDnsMessage(self, myDnsMessage):
         if myDnsMessage.command == self.getCommand[0]:
             self.logger.info("Received a '" + \
                 str(self.getCommand[0]) + "' DNS message from '" + \
                 myDnsMessage.id.clientId + "'.")
-            return self.handleRegisterDNS(myDnsMessage)
+            self.handleRegisterDNS(myDnsMessage)
         elif myDnsMessage.command == self.getCommand[1]:
             self.logger.info("Received a '" + \
                 str(self.getCommand[1]) + "' DNS message from '" + \
                 myDnsMessage.id.clientId + "'.")
-            return self.handleRequestDNS(myDnsMessage)
-        elif myDnsMessage.command == self.getCommand[2]:
-            self.logger.info("Received a '" + \
-                str(self.getCommand[2]) + "' DNS message from '" + \
+            self.handleRequestDNS(myDnsMessage)
+        else:
+            self.logger.warning("Unknown DNSMessage Command: '" + \
+                str(myDnsMessage.command) + "' received from '" + \
                 myDnsMessage.id.clientId + "'.")
-            return self.handleLoginDNS(myDnsMessage, clientSock)
-        elif myDnsMessage.command == self.getCommand[3]:
-            self.logger.info("Received a '" + \
-                str(self.getCommand[3]) + "' DNS message from '" + \
-                myDnsMessage.id.clientId + "'.")
-            return self.handleACKDNS(myDnsMessage)
-        self.logger.warning("Unknown DNSMessage Command: '" + \
-            str(myDnsMessage.command) + "' received from '" + \
-            myDnsMessage.id.clientId + "'.")
-        return 0
+            return 0
+        return 1
 
     # Extract the name, ipv4 address, last update, and misc information from 
     # DNS message and register into local DNS
@@ -489,56 +464,8 @@ class toiChatNameServer():
         #
         self.myToiChatClient.sendMessage(returnAddress, myRequestDNS)
         
-        return 1
-
-    # Handles a Login Message type. The login message checks against this
-    # DNS instance to see if username is already in use.
-    #  
-    def handleLoginDNS(self, loginDNSMessage, clientSock):
-        # Get the information about the client requesting DNS information
-        #
-        returnHostname = requestDNSMessage.id.clientName
-
-        # Lookup in our DNS table to see who is associate with the 
-        # returnHostname (if any)
-        #
-        ipAssociatedInTable = lookupIPByHostname(returnHostname)
-
-        # If client is not in our DNS table we will send a OK message back
-        # to the client
-        #
-        if ipAssociatedInTable:
-            # Create a ACK message signifying the clientname is not in use
-            #:
-            myACKDNS = self.createACKDnsMessage(True)
-        else:
-            # Create error message
-            #
-            errorMsg = "Login Failed. Name already in use by " + \
-                ipAssociatedInTable
-
-            # Create a ACK message signifying the clientname is already in
-            # use. Send the client what IP the client is already in use in.
-            #
-            myACKDNS = self.createACKDnsMessage(False, errorMsg)
-
-        # Send message back to requester
-        #
-        self.myToiChatClient.sendMessageSocket(clientSock, myACKDNS)
-        return 1
-
-    # Handles response message receives after a request message
-    #s
-    def handleACKDNS(self, ackDNSMessage):
-        self.logger.info("ACK Received from: '" + \
-            ackDNSMessage.id.clientName + \
-            "' with status: '" + \
-            ackDNSMessage.status + "'")
-        if ackDNSMessage.status == "ok":
-            return 1
-        else: 
-            return 0
-
+        return 1        
+  
     # Send our DNS table to another machine
     # Populate a DnsMessage Register message type with information about
     # each client in our DNS table. 
@@ -604,48 +531,6 @@ class toiChatNameServer():
         #
         return requestDNS
 
-    # Create a message ACK responding with whether the sent request 
-    # was successful or not.
-    #
-    def createACKDnsMessage(self, status, errorInfo=None):
-        # Create a template DNS message
-        #
-        ackDNS = \
-            self.myToiChatClient.createTemplateIdentifierMessage("dnsMessage")
-
-        # Populate the command we will use in the message with the
-        # request dnsMessage value
-        #
-        ackDNS.dnsMessage.command = self.getCommand[4]
-
-        # Check what status to append to the message
-        #
-        if status == True:
-            ackDNS.DnsMessage.status("ok")
-        else:
-            ackDNS.DnsMessage.status("ERROR: " + errorInfo)
-
-        #return requestDNS message
-        #
-        return ackDNS
-
-    # Create a message attempting to login to a toiChatNetwork
-    # by checking if the desired username is already in use.
-    #
-    def createLoginDnsMessage(self):
-        # Create a template DNS message
-        #
-        loginDNS = \
-            self.myToiChatClient.createTemplateIdentifierMessage("dnsMessage")
-
-        # Populate the command we will use in the message with the
-        # request dnsMessage value
-        #
-        loginDNS.dnsMessage.command = self.getCommand[3]
-
-        #return requestDNS message
-        #
-        return loginDNS
     # -----------------------------------------------------------------
     # ------------------- START OF AUTO PING FUNCTIONS ----------------
     # -----------------------------------------------------------------
